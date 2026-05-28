@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+// Browser-side API client. All requests target Next.js route handlers under
+// /api/*, which proxy to the Spring backend and attach the JWT from the
+// httpOnly cookie. The browser never talks to the backend directly.
 
 export class ApiError extends Error {
   constructor(
@@ -16,9 +18,8 @@ type ApiInit = Omit<RequestInit, "body"> & { body?: unknown };
 export async function apiFetch<T>(path: string, init: ApiInit = {}): Promise<T> {
   const { body, headers, ...rest } = init;
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`/api${path}`, {
     ...rest,
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...headers,

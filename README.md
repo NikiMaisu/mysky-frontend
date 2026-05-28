@@ -28,13 +28,13 @@ npm install
 npm run dev
 ```
 
-App listens on `http://localhost:3000`. It expects the backend on the URL set by `NEXT_PUBLIC_API_BASE_URL` (default `http://localhost:8081`).
+App listens on `http://localhost:4000`. It expects the backend on the URL set by `NEXT_PUBLIC_API_BASE_URL` (default `http://localhost:8089`).
 
 ## Environment variables
 
 | Variable                    | Default                 | Notes                            |
 |-----------------------------|-------------------------|----------------------------------|
-| `NEXT_PUBLIC_API_BASE_URL`  | `http://localhost:8081` | Backend root URL                 |
+| `NEXT_PUBLIC_API_BASE_URL`  | `http://localhost:8089` | Backend root URL                 |
 
 ## Scripts
 
