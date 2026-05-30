@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 
@@ -38,13 +39,23 @@ export default function Home() {
           Signed in as {user.email} ({user.role.toLowerCase()})
         </p>
       </div>
-      <button
-        type="button"
-        onClick={handleLogout}
-        className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
-      >
-        Sign out
-      </button>
+      <div className="flex gap-3">
+        {user.role === "ADMIN" && (
+          <Link
+            href="/settings"
+            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          >
+            Configuration
+          </Link>
+        )}
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+        >
+          Sign out
+        </button>
+      </div>
     </main>
   );
 }
