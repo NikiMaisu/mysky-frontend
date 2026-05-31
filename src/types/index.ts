@@ -73,3 +73,73 @@ export interface Team {
   active: boolean;
   members: Worker[];
 }
+
+export type OrderStatus = "QUOTED" | "SCHEDULED" | "IN_PROGRESS" | "DONE" | "CANCELLED";
+
+export interface OrderFixtureLine {
+  fixtureId: number | null;
+  name: string;
+  unit: FixtureUnit;
+  unitCost: number;
+  unitTimeMinutes: number;
+  quantity: number;
+  lineCost: number;
+  lineTimeMinutes: number;
+}
+
+export interface OrderAddonLine {
+  addonId: number | null;
+  name: string;
+  category: AddonCategory;
+  unitCost: number;
+  unitTimeMinutes: number;
+  quantity: number;
+  lineCost: number;
+  lineTimeMinutes: number;
+}
+
+export interface Order {
+  id: number;
+  orderNumber: number;
+  clientName: string;
+  clientPhone: string | null;
+  address: string | null;
+  startAt: string;
+  finishAt: string;
+  teamId: number | null;
+  teamName: string | null;
+  materialId: number | null;
+  materialName: string;
+  materialPricePerM2: number;
+  materialTimePerM2Minutes: number;
+  squareMeters: number;
+  graniteEnabled: boolean;
+  perimeter: number | null;
+  granitePricePerMeter: number | null;
+  graniteTimePerMeterMinutes: number | null;
+  flatAddedMinutes: number;
+  totalMinutes: number;
+  totalCost: number;
+  status: OrderStatus;
+  notes: string | null;
+  fixtures: OrderFixtureLine[];
+  addons: OrderAddonLine[];
+}
+
+export interface OrderRequest {
+  clientName: string;
+  clientPhone?: string;
+  address?: string;
+  startAt: string;
+  finishAt?: string | null;
+  teamId?: number | null;
+  materialId: number;
+  squareMeters: number;
+  graniteEnabled: boolean;
+  perimeter?: number | null;
+  flatAddedMinutes?: number;
+  status?: OrderStatus;
+  notes?: string;
+  fixtures: { fixtureId: number; quantity: number }[];
+  addons: { addonId: number; quantity: number }[];
+}
