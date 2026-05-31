@@ -15,9 +15,20 @@ export default function LoginPage() {
 
 function LoginFormFallback() {
   return (
-    <div className="flex flex-1 items-center justify-center px-4 py-12">
-      <p className="text-sm text-zinc-500">Loading…</p>
+    <div className="ms-auth">
+      <p className="muted" style={{ fontSize: 13 }}>Loading…</p>
     </div>
+  );
+}
+
+function BrandMark() {
+  return (
+    <span className="ms-brand-mark" aria-hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M3 8 Q12 4 21 8 L21 18 L3 18 Z" stroke="white" strokeWidth="1.7" strokeLinejoin="round" />
+        <path d="M3 8 Q12 11 21 8" stroke="white" strokeWidth="1.4" opacity="0.7" />
+      </svg>
+    </span>
   );
 }
 
@@ -51,50 +62,44 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center px-4 py-12">
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-sm rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-      >
-        <h1 className="mb-6 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-          Sign in to mysky
-        </h1>
+    <div className="ms-auth">
+      <form onSubmit={onSubmit} className="ms-card ms-auth-card">
+        <div className="ms-auth-head">
+          <div className="ms-brand">
+            <BrandMark />
+            <span className="ms-brand-name">MySky</span>
+          </div>
+          <div className="ms-auth-title">Sign in</div>
+          <div className="ms-auth-sub">Internal scheduling for stretch ceiling crews</div>
+        </div>
 
-        <label className="mb-4 block">
-          <span className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Email</span>
+        <div className="ms-field">
+          <span className="ms-label">Email</span>
           <input
             type="email"
             autoComplete="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            className="ms-input"
           />
-        </label>
+        </div>
 
-        <label className="mb-6 block">
-          <span className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Password</span>
+        <div className="ms-field">
+          <span className="ms-label">Password</span>
           <input
             type="password"
             autoComplete="current-password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+            className="ms-input"
           />
-        </label>
+        </div>
 
-        {error && (
-          <p className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-            {error}
-          </p>
-        )}
+        {error && <p className="ms-banner error" style={{ marginBottom: 14 }}>{error}</p>}
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition disabled:opacity-60 hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-        >
+        <button type="submit" disabled={submitting} className="ms-btn primary" style={{ width: "100%", justifyContent: "center" }}>
           {submitting ? "Signing in…" : "Sign in"}
         </button>
       </form>

@@ -14,54 +14,55 @@ const NAV = [
   { href: "/settings/teams", label: "Teams" },
 ];
 
+function BrandMark() {
+  return (
+    <span className="ms-brand-mark" aria-hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M3 8 Q12 4 21 8 L21 18 L3 18 Z" stroke="white" strokeWidth="1.7" strokeLinejoin="round" />
+        <path d="M3 8 Q12 11 21 8" stroke="white" strokeWidth="1.4" opacity="0.7" />
+      </svg>
+    </span>
+  );
+}
+
 export default function SettingsLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const pathname = usePathname();
 
   if (loading) {
-    return (
-      <main className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-zinc-500">Loading…</p>
-      </main>
-    );
+    return <main className="ms-page"><div className="ms-center">Loading…</div></main>;
   }
 
   if (!user || user.role !== "ADMIN") {
-    return (
-      <main className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-zinc-500">Configuration is available to admins only.</p>
-      </main>
-    );
+    return <main className="ms-page"><div className="ms-center">Configuration is available to admins only.</div></main>;
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8 sm:flex-row">
-      <aside className="sm:w-48 sm:shrink-0">
-        <div className="mb-4">
-          <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
-            ← Back
-          </Link>
-        </div>
-        <nav className="flex flex-row flex-wrap gap-1 sm:flex-col">
-          {NAV.map((item) => {
-            const active = pathname === item.href;
-            return (
+    <main className="ms-page">
+      <div className="ms-page-bar">
+        <Link href="/" className="ms-brand" style={{ textDecoration: "none" }}>
+          <BrandMark />
+          <span className="ms-brand-name">MySky</span>
+        </Link>
+        <span className="muted" style={{ fontSize: 12 }}>/ Configuration</span>
+      </div>
+
+      <div className="ms-page-body">
+        <div className="ms-settings">
+          <nav className="ms-settings-nav">
+            {NAV.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-md px-3 py-2 text-sm font-medium ${
-                  active
-                    ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
-                    : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                }`}
+                className={"ms-navlink" + (pathname === item.href ? " active" : "")}
               >
                 {item.label}
               </Link>
-            );
-          })}
-        </nav>
-      </aside>
-      <section className="min-w-0 flex-1">{children}</section>
-    </div>
+            ))}
+          </nav>
+          <div className="ms-settings-content">{children}</div>
+        </div>
+      </div>
+    </main>
   );
 }

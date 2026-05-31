@@ -1,0 +1,193 @@
+/* ===== MySky — app surfaces not covered by the mockup =====
+   (auth, generic pages, settings shell, data tables). Built from the
+   same tokens/classes as mysky-design.css so they read as one system. */
+
+/* base page background to match the design canvas */
+body {
+  background: oklch(0.97 0.004 80);
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+/* ---- brand mark (logo + wordmark) ---- */
+.ms-brand { display: flex; align-items: center; gap: 10px; }
+.ms-brand-mark {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  /* blue icon removed for now — neutral ink mark */
+  background: linear-gradient(155deg, var(--ink) 0%, oklch(0.32 0.005 80) 100%);
+  display: grid; place-items: center;
+  color: white;
+}
+.ms-brand-name {
+  font-size: 17px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink);
+}
+.ms-brand-sub { font-size: 12px; color: var(--mute); margin-top: 1px; }
+
+/* ---- generic card ---- */
+.ms-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-2);
+}
+
+/* ---- auth screen ---- */
+.ms-auth {
+  min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.ms-auth-card { width: 100%; max-width: 380px; padding: 28px 26px; }
+.ms-auth-head { text-align: center; margin-bottom: 22px; }
+.ms-auth-head .ms-brand { justify-content: center; margin-bottom: 14px; }
+.ms-auth-title { font-size: 18px; font-weight: 600; color: var(--ink); }
+.ms-auth-sub { font-size: 13px; color: var(--mute); margin-top: 4px; }
+
+/* ---- message banners ---- */
+.ms-banner {
+  font-size: 12.5px;
+  padding: 8px 11px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+}
+.ms-banner.error   { background: oklch(0.96 0.03 25);  color: oklch(0.45 0.15 25);  border-color: oklch(0.88 0.05 25); }
+.ms-banner.success { background: var(--st-done-bg);     color: var(--st-done-ink);   border-color: oklch(0.86 0.06 150); }
+.ms-banner.info    { background: var(--surface-2);      color: var(--ink-2);         border-color: var(--border); }
+
+/* ---- generic page wrapper (centered, branded top bar) ---- */
+.ms-page {
+  min-height: 100dvh;
+  display: flex; flex-direction: column;
+  background: oklch(0.97 0.004 80);
+}
+.ms-page-bar {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.ms-page-bar .spacer { flex: 1; }
+.ms-page-body {
+  flex: 1;
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 28px 20px 48px;
+}
+
+/* small centered status (loading / empty states for whole page) */
+.ms-center { flex: 1; display: grid; place-items: center; color: var(--mute); font-size: 13px; padding: 40px; }
+
+/* ---- button extras (mockup has .ms-btn / .primary / .accent) ---- */
+.ms-btn.ghost { border-color: transparent; background: transparent; }
+.ms-btn.ghost:hover { background: var(--surface-3); }
+.ms-btn.danger { border-color: oklch(0.85 0.07 25); color: oklch(0.5 0.16 25); background: var(--surface); }
+.ms-btn.danger:hover { background: oklch(0.96 0.03 25); }
+.ms-btn.sm { padding: 5px 9px; font-size: 12px; }
+.ms-link { border: 0; background: transparent; padding: 0; font: inherit; color: var(--accent-2); cursor: pointer; }
+.ms-link:hover { text-decoration: underline; }
+.ms-link.danger { color: oklch(0.5 0.16 25); }
+
+/* ---- settings shell ---- */
+.ms-settings { display: flex; gap: 24px; align-items: flex-start; }
+.ms-settings-nav { width: 200px; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; position: sticky; top: 28px; }
+.ms-navlink {
+  display: block;
+  padding: 8px 11px;
+  border-radius: var(--r-sm);
+  font-size: 12.5px; font-weight: 500;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.ms-navlink:hover { background: var(--surface-3); }
+.ms-navlink.active { background: var(--ink); color: white; }
+.ms-settings-content { flex: 1; min-width: 0; }
+
+/* page header inside content */
+.ms-ph { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.ms-ph-title { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
+.ms-ph-sub { font-size: 13px; color: var(--mute); margin-top: 3px; max-width: 60ch; }
+
+/* ---- data table ---- */
+.ms-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+.ms-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ms-table thead th {
+  text-align: left;
+  font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--mute);
+  padding: 11px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.ms-table tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+  vertical-align: middle;
+}
+.ms-table tbody tr:last-child td { border-bottom: 0; }
+.ms-table tbody tr:hover td { background: var(--surface-2); }
+.ms-table .num, .ms-table .mono { font-variant-numeric: tabular-nums; }
+.ms-table .actions { text-align: right; white-space: nowrap; }
+.ms-table .actions .ms-link { margin-left: 14px; }
+.ms-table .empty, .ms-table .loading { text-align: center; color: var(--mute); padding: 28px; }
+
+/* inline edit/create form panel inside content */
+.ms-form-panel { padding: 18px; margin-bottom: 20px; }
+.ms-form-panel h2 { font-size: 13px; font-weight: 600; color: var(--ink); margin: 0 0 16px; }
+.ms-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ms-form-actions { display: flex; gap: 8px; margin-top: 16px; }
+
+/* checkbox list (team members) */
+.ms-check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; }
+.ms-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.ms-check input { accent-color: var(--accent); width: 15px; height: 15px; }
+
+/* role/category pill */
+.ms-pill {
+  display: inline-flex; align-items: center;
+  padding: 2px 9px; border-radius: 99px;
+  font-size: 11px; font-weight: 500;
+  background: var(--surface-3); color: var(--ink-2);
+}
+
+/* status pill (reuses design status-tag-* colors) */
+.status-tag-cancelled { background: var(--surface-3); color: var(--mute); }
+
+/* order line-item rows: pick + qty + remove */
+.ms-line-row {
+  display: grid;
+  grid-template-columns: 1fr 110px 32px;
+  gap: 8px; align-items: center;
+}
+.ms-line-remove {
+  border: 1px solid var(--border); background: var(--surface);
+  border-radius: var(--r-sm); color: var(--mute);
+  width: 32px; height: 34px; display: grid; place-items: center; cursor: pointer;
+}
+.ms-line-remove:hover { color: oklch(0.5 0.16 25); border-color: oklch(0.85 0.07 25); }
+
+.ms-checkline { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+.ms-checkline input[type="checkbox"] { accent-color: var(--ink); width: 15px; height: 15px; }
+
+@media (max-width: 760px) {
+  .ms-line-row { grid-template-columns: 1fr 90px 32px; }
+}
+
+@media (max-width: 900px) {
+  .ms-order-grid { grid-template-columns: 1fr !important; }
+  .ms-order-grid aside { position: static !important; }
+}
+
+@media (max-width: 760px) {
+  .ms-settings { flex-direction: column; }
+  .ms-settings-nav { width: 100%; flex-direction: row; flex-wrap: wrap; position: static; }
+  .ms-form-grid, .ms-check-grid { grid-template-columns: 1fr; }
+}
