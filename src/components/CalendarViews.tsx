@@ -23,6 +23,55 @@ function hourOf(d: Date): number {
   return d.getHours() + d.getMinutes() / 60;
 }
 
+interface Laid {
+  o: CalendarOrder;
+  seg: { start: Date; end: Date };
+  lane: number;
+  lanes: number;
+}
+
+/**
+ * Side-by-side layout for a day's segments: overlapping jobs share the column
+ * width instead of stacking. Each gets a lane index and the lane count of its
+ * overlapping cluster (interval-graph column packing).
+ */
+function layoutLanes(items: { o: CalendarOrder; seg: { start: Date; end: Date } }[]): Laid[] {
+  const sorted = [...items].sort(
+    (a, b) => a.seg.start.getTime() - b.seg.start.getTime() || a.seg.end.getTime() - b.seg.end.getTime(),
+  );
+  const result: Laid[] = [];
+  let cluster: Laid[] = [];
+  let columnEnds: number[] = [];
+  let clusterEnd = -Infinity;
+
+  const flush = () => {
+    const lanes = columnEnds.length || 1;
+    for (const e of cluster) e.lanes = lanes;
+    cluster = [];
+    columnEnds = [];
+    clusterEnd = -Infinity;
+  };
+
+  for (const it of sorted) {
+    const s = it.seg.start.getTime();
+    const e = it.seg.end.getTime();
+    if (cluster.length && s >= clusterEnd) flush();
+    let lane = columnEnds.findIndex((end) => end <= s);
+    if (lane === -1) {
+      lane = columnEnds.length;
+      columnEnds.push(e);
+    } else {
+      columnEnds[lane] = e;
+    }
+    const laid: Laid = { ...it, lane, lanes: 1 };
+    cluster.push(laid);
+    result.push(laid);
+    clusterEnd = Math.max(clusterEnd, e);
+  }
+  flush();
+  return result;
+}
+
 function FreeChips({ avail }: { avail?: DayAvailability }) {
   if (!avail) return null;
   if (avail.freeTeams.length === 0) {
@@ -83,15 +132,16 @@ export function CalendarTimeGrid({
             </div>
           ))}
 
-          {days.map((d, di) =>
-            orders.map((o) => {
-              const seg = daySegment(o.startAt, o.finishAt, d, scheduleFor(o.teamId));
-              if (!seg) return null;
+          {days.map((d, di) => {
+            const items = orders
+              .map((o) => ({ o, seg: daySegment(o.startAt, o.finishAt, d, scheduleFor(o.teamId)) }))
+              .filter((x): x is { o: CalendarOrder; seg: { start: Date; end: Date } } => x.seg !== null);
+            return layoutLanes(items).map(({ o, seg, lane, lanes }) => {
               const startH = Math.max(HOUR_START, Math.min(hourOf(seg.start), HOUR_END + 1));
               const endH = Math.max(startH + 0.25, Math.min(hourOf(seg.end), HOUR_END + 1));
               const top = (startH - HOUR_START) * HOUR_PX;
               const height = Math.min((endH - startH) * HOUR_PX - 4, GRID_HEIGHT - top);
-              const compact = endH - startH < 1.5;
+              const compact = endH - startH < 1.5 || lanes > 2;
               return (
                 <div
                   key={`${o.id}-${di}`}
@@ -100,8 +150,8 @@ export function CalendarTimeGrid({
                     position: "absolute",
                     top,
                     height,
-                    left: `calc(64px + (100% - 64px) / ${cols} * ${di} + 4px)`,
-                    width: `calc((100% - 64px) / ${cols} - 8px)`,
+                    left: `calc(64px + (100% - 64px) * ${di} / ${cols} + (100% - 64px) / ${cols} * ${lane} / ${lanes} + 2px)`,
+                    width: `calc((100% - 64px) / ${cols} / ${lanes} - 4px)`,
                   }}
                   onClick={() => onPickOrder(o.id)}
                   role="button"
@@ -118,8 +168,8 @@ export function CalendarTimeGrid({
                   )}
                 </div>
               );
-            }),
-          )}
+            });
+          })}
         </div>
       </div>
     </div>
