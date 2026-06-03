@@ -12,11 +12,12 @@ import {
   statusLabel,
   toLocalInput,
 } from "@/lib/orders";
-import type { Addon, Fixture, GraniteConfig, Material, Order, OrderRequest, OrderStatus, Team } from "@/types";
+import { computeFinish, resolveSchedule, workdayMinutes } from "@/lib/schedule";
+import type { Addon, Fixture, GraniteConfig, Material, Order, OrderRequest, OrderStatus, Team, TimeUnit, WorkSchedule } from "@/types";
 
 interface LineState {
   key: string;
-  refId: string; // fixtureId or addonId, "" when unselected
+  refId: string;
   quantity: string;
 }
 
@@ -31,15 +32,14 @@ export function OrderForm({ initial }: { initial?: Order }) {
   const router = useRouter();
   const editing = !!initial;
 
-  // reference data
   const [materials, setMaterials] = useState<Material[]>([]);
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [addons, setAddons] = useState<Addon[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [granite, setGranite] = useState<GraniteConfig | null>(null);
+  const [workSchedule, setWorkSchedule] = useState<WorkSchedule | null>(null);
   const [refLoading, setRefLoading] = useState(true);
 
-  // form state
   const [clientName, setClientName] = useState(initial?.clientName ?? "");
   const [clientPhone, setClientPhone] = useState(initial?.clientPhone ?? "");
   const [address, setAddress] = useState(initial?.address ?? "");
@@ -49,7 +49,10 @@ export function OrderForm({ initial }: { initial?: Order }) {
   const [squareMeters, setSquareMeters] = useState(initial ? String(initial.squareMeters) : "");
   const [graniteEnabled, setGraniteEnabled] = useState(initial?.graniteEnabled ?? false);
   const [perimeter, setPerimeter] = useState(initial?.perimeter != null ? String(initial.perimeter) : "");
-  const [flatAdded, setFlatAdded] = useState(initial ? String(initial.flatAddedMinutes) : "0");
+  const [flatValue, setFlatValue] = useState(initial ? String(initial.flatAddedMinutes) : "0");
+  const [flatUnit, setFlatUnit] = useState<TimeUnit>("MINUTES");
+  const [customEnd, setCustomEnd] = useState(initial?.finishOverridden ?? false);
+  const [endValue, setEndValue] = useState(initial?.finishOverridden ? toLocalInput(initial.finishAt) : "");
   const [status, setStatus] = useState<OrderStatus>(initial?.status ?? "QUOTED");
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [fixtureLines, setFixtureLines] = useState<LineState[]>(
@@ -65,18 +68,20 @@ export function OrderForm({ initial }: { initial?: Order }) {
   useEffect(() => {
     void (async () => {
       try {
-        const [m, f, a, t, g] = await Promise.all([
+        const [m, f, a, t, g, ws] = await Promise.all([
           apiFetch<Material[]>("/materials"),
           apiFetch<Fixture[]>("/fixtures"),
           apiFetch<Addon[]>("/addons"),
           apiFetch<Team[]>("/teams"),
           apiFetch<GraniteConfig>("/granite"),
+          apiFetch<WorkSchedule>("/work-schedule"),
         ]);
         setMaterials(m);
         setFixtures(f);
         setAddons(a);
         setTeams(t);
         setGranite(g);
+        setWorkSchedule(ws);
       } catch {
         setError("Failed to load reference data.");
       } finally {
@@ -85,7 +90,20 @@ export function OrderForm({ initial }: { initial?: Order }) {
     })();
   }, []);
 
-  // ---- live calculation (mirrors OrderCalculationService) ----
+  // schedule resolution: team override (if assigned) else global
+  const schedule = useMemo(() => {
+    if (!workSchedule) return null;
+    const team = teams.find((t) => t.id === Number(teamId)) ?? null;
+    return resolveSchedule(team, workSchedule);
+  }, [teams, teamId, workSchedule]);
+
+  const workdayMin = schedule ? workdayMinutes(schedule) : 480;
+
+  const flatMinutes = useMemo(() => {
+    const v = Number(flatValue) || 0;
+    return flatUnit === "MINUTES" ? v : flatUnit === "HOURS" ? v * 60 : v * workdayMin;
+  }, [flatValue, flatUnit, workdayMin]);
+
   const calc = useMemo(() => {
     const sqm = Number(squareMeters) || 0;
     const material = materials.find((m) => m.id === Number(materialId));
@@ -124,20 +142,23 @@ export function OrderForm({ initial }: { initial?: Order }) {
       cost += lc;
       rows.push({ label: `${ad.name} ×${q}`, cost: lc });
     }
-    minutes += Number(flatAdded) || 0;
+    minutes += flatMinutes;
 
     return { minutes: Math.round(minutes), cost, rows };
-  }, [squareMeters, materialId, materials, graniteEnabled, granite, perimeter, fixtureLines, fixtures, addonLines, addons, flatAdded]);
+  }, [squareMeters, materialId, materials, graniteEnabled, granite, perimeter, fixtureLines, fixtures, addonLines, addons, flatMinutes]);
 
-  const finishPreview = useMemo(() => {
-    if (!startAt) return null;
-    const d = new Date(startAt);
-    d.setMinutes(d.getMinutes() + calc.minutes);
-    return d.toISOString();
-  }, [startAt, calc.minutes]);
+  const recommendedFinish = useMemo(
+    () => (schedule && startAt ? computeFinish(startAt, calc.minutes, schedule) : null),
+    [schedule, startAt, calc.minutes],
+  );
 
   function setLine(setter: typeof setFixtureLines, key: string, patch: Partial<LineState>) {
     setter((lines) => lines.map((l) => (l.key === key ? { ...l, ...patch } : l)));
+  }
+
+  function toggleCustomEnd(on: boolean) {
+    setCustomEnd(on);
+    if (on && !endValue && recommendedFinish) setEndValue(toLocalInput(recommendedFinish.toISOString()));
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -151,6 +172,10 @@ export function OrderForm({ initial }: { initial?: Order }) {
       setError("Perimeter is required when granite is enabled.");
       return;
     }
+    if (customEnd && !endValue) {
+      setError("Set a custom end time or turn the override off.");
+      return;
+    }
     setSaving(true);
 
     const payload: OrderRequest = {
@@ -158,20 +183,19 @@ export function OrderForm({ initial }: { initial?: Order }) {
       clientPhone: clientPhone || undefined,
       address: address || undefined,
       startAt: fromLocalInput(startAt),
+      finishOverridden: customEnd,
+      finishAt: customEnd ? fromLocalInput(endValue) : null,
       teamId: teamId ? Number(teamId) : null,
       materialId: Number(materialId),
       squareMeters: Number(squareMeters) || 0,
       graniteEnabled,
       perimeter: graniteEnabled ? Number(perimeter) || 0 : null,
-      flatAddedMinutes: Number(flatAdded) || 0,
+      flatAddedValue: Number(flatValue) || 0,
+      flatAddedUnit: flatUnit,
       status,
       notes: notes || undefined,
-      fixtures: fixtureLines
-        .filter((l) => l.refId)
-        .map((l) => ({ fixtureId: Number(l.refId), quantity: Number(l.quantity) || 0 })),
-      addons: addonLines
-        .filter((l) => l.refId)
-        .map((l) => ({ addonId: Number(l.refId), quantity: Number(l.quantity) || 0 })),
+      fixtures: fixtureLines.filter((l) => l.refId).map((l) => ({ fixtureId: Number(l.refId), quantity: Number(l.quantity) || 0 })),
+      addons: addonLines.filter((l) => l.refId).map((l) => ({ addonId: Number(l.refId), quantity: Number(l.quantity) || 0 })),
     };
 
     try {
@@ -183,11 +207,7 @@ export function OrderForm({ initial }: { initial?: Order }) {
       router.push("/orders");
       router.refresh();
     } catch (err) {
-      setError(
-        err instanceof ApiError && err.status === 400
-          ? "Please check the highlighted fields."
-          : "Failed to save the order.",
-      );
+      setError(err instanceof ApiError && err.status === 400 ? "Please check the highlighted fields." : "Failed to save the order.");
     } finally {
       setSaving(false);
     }
@@ -207,6 +227,8 @@ export function OrderForm({ initial }: { initial?: Order }) {
 
   if (refLoading) return <div className="ms-center">Loading…</div>;
 
+  const shownFinish = customEnd && endValue ? new Date(endValue) : recommendedFinish;
+
   return (
     <form onSubmit={onSubmit}>
       <div className="ms-ph">
@@ -220,7 +242,6 @@ export function OrderForm({ initial }: { initial?: Order }) {
 
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 300px", gap: 24, alignItems: "start" }} className="ms-order-grid">
         <div>
-          {/* Client */}
           <div className="ms-card ms-form-panel">
             <h2>Client</h2>
             <div className="ms-field">
@@ -239,7 +260,6 @@ export function OrderForm({ initial }: { initial?: Order }) {
             </div>
           </div>
 
-          {/* Scheduling */}
           <div className="ms-card ms-form-panel">
             <h2>Scheduling</h2>
             <div className="ms-form-grid">
@@ -252,7 +272,7 @@ export function OrderForm({ initial }: { initial?: Order }) {
                 <select className="ms-select" value={teamId} onChange={(e) => setTeamId(e.target.value)}>
                   <option value="">Unassigned</option>
                   {teams.map((t) => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
+                    <option key={t.id} value={t.id}>{t.name}{t.schedule ? " (custom hours)" : ""}</option>
                   ))}
                 </select>
               </div>
@@ -269,7 +289,6 @@ export function OrderForm({ initial }: { initial?: Order }) {
             </div>
           </div>
 
-          {/* Material & area */}
           <div className="ms-card ms-form-panel">
             <h2>Material &amp; area</h2>
             <div className="ms-form-grid">
@@ -299,7 +318,6 @@ export function OrderForm({ initial }: { initial?: Order }) {
             )}
           </div>
 
-          {/* Fixtures */}
           <LineEditor
             title="Lighting fixtures"
             lines={fixtureLines}
@@ -309,7 +327,6 @@ export function OrderForm({ initial }: { initial?: Order }) {
             onRemove={(key) => setFixtureLines((l) => l.filter((x) => x.key !== key))}
           />
 
-          {/* Add-ons */}
           <LineEditor
             title="Add-ons"
             lines={addonLines}
@@ -319,12 +336,21 @@ export function OrderForm({ initial }: { initial?: Order }) {
             onRemove={(key) => setAddonLines((l) => l.filter((x) => x.key !== key))}
           />
 
-          {/* Extras */}
           <div className="ms-card ms-form-panel">
             <h2>Extra time &amp; notes</h2>
-            <div className="ms-field" style={{ maxWidth: 220 }}>
-              <span className="ms-label">Flat added time (min)</span>
-              <input type="number" step="1" min="0" className="ms-input" value={flatAdded} onChange={(e) => setFlatAdded(e.target.value)} />
+            <div className="ms-field">
+              <span className="ms-label">Flat added time</span>
+              <div className="ms-line-row" style={{ gridTemplateColumns: "1fr 130px", maxWidth: 320 }}>
+                <input type="number" step="0.5" min="0" className="ms-input" value={flatValue} onChange={(e) => setFlatValue(e.target.value)} />
+                <select className="ms-select" value={flatUnit} onChange={(e) => setFlatUnit(e.target.value as TimeUnit)}>
+                  <option value="MINUTES">minutes</option>
+                  <option value="HOURS">hours</option>
+                  <option value="DAYS">days</option>
+                </select>
+              </div>
+              {flatUnit === "DAYS" && (
+                <span className="muted" style={{ fontSize: 11, marginTop: 4 }}>1 day = {Math.round(workdayMin)} min (this schedule&apos;s workday)</span>
+              )}
             </div>
             <div className="ms-field" style={{ marginBottom: 0 }}>
               <span className="ms-label">Notes</span>
@@ -333,7 +359,6 @@ export function OrderForm({ initial }: { initial?: Order }) {
           </div>
         </div>
 
-        {/* Summary */}
         <aside style={{ position: "sticky", top: 28 }}>
           <div className="ms-calc">
             {calc.rows.map((r, i) => (
@@ -352,13 +377,33 @@ export function OrderForm({ initial }: { initial?: Order }) {
               </div>
             </div>
             <div className="ms-calc-row" style={{ marginTop: 6 }}>
-              <span className="lbl">Est. time</span>
+              <span className="lbl">Est. work time</span>
               <span>{formatMinutes(calc.minutes)}</span>
             </div>
-            {finishPreview && (
+            {recommendedFinish && (
               <div className="ms-calc-row">
-                <span className="lbl">Finish</span>
-                <span>{formatDateTime(finishPreview)}</span>
+                <span className="lbl">Recommended finish</span>
+                <span>{formatDateTime(recommendedFinish.toISOString())}</span>
+              </div>
+            )}
+
+            <label className="ms-checkline" style={{ marginTop: 12 }}>
+              <input type="checkbox" checked={customEnd} onChange={(e) => toggleCustomEnd(e.target.checked)} />
+              Set a custom end time
+            </label>
+            {customEnd && (
+              <input
+                type="datetime-local"
+                className="ms-input"
+                style={{ marginTop: 8 }}
+                value={endValue}
+                onChange={(e) => setEndValue(e.target.value)}
+              />
+            )}
+            {shownFinish && (
+              <div className="ms-calc-row" style={{ marginTop: 8 }}>
+                <span className="lbl">{customEnd ? "End (custom)" : "Finish"}</span>
+                <span>{formatDateTime(shownFinish.toISOString())}</span>
               </div>
             )}
           </div>
@@ -407,15 +452,7 @@ function LineEditor({
                 <option key={o.id} value={o.id}>{o.label}</option>
               ))}
             </select>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              className="ms-input"
-              value={l.quantity}
-              onChange={(e) => onChange(l.key, { quantity: e.target.value })}
-              placeholder="Qty"
-            />
+            <input type="number" step="0.01" min="0" className="ms-input" value={l.quantity} onChange={(e) => onChange(l.key, { quantity: e.target.value })} placeholder="Qty" />
             <button type="button" className="ms-line-remove" onClick={() => onRemove(l.key)} aria-label="Remove">×</button>
           </div>
         ))}

@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ScheduleFields } from "@/components/ScheduleFields";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { Team, Worker } from "@/types";
+
+const DEFAULT_DAYS = [true, true, true, true, true, true, false];
 
 type Mode = { kind: "closed" } | { kind: "new" } | { kind: "edit"; id: number };
 
@@ -15,6 +18,10 @@ export default function TeamsPage() {
   const [mode, setMode] = useState<Mode>({ kind: "closed" });
   const [name, setName] = useState("");
   const [memberIds, setMemberIds] = useState<Set<number>>(new Set());
+  const [hasOverride, setHasOverride] = useState(false);
+  const [days, setDays] = useState<boolean[]>(DEFAULT_DAYS);
+  const [start, setStart] = useState("10:00");
+  const [end, setEnd] = useState("18:00");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -39,9 +46,24 @@ export default function TeamsPage() {
     void load();
   }, [load]);
 
+  function resetSchedule(team?: Team) {
+    if (team?.schedule) {
+      setHasOverride(true);
+      setDays(team.schedule.days);
+      setStart(team.schedule.start.slice(0, 5));
+      setEnd(team.schedule.end.slice(0, 5));
+    } else {
+      setHasOverride(false);
+      setDays(DEFAULT_DAYS);
+      setStart("10:00");
+      setEnd("18:00");
+    }
+  }
+
   function openNew() {
     setName("");
     setMemberIds(new Set());
+    resetSchedule();
     setFormError(null);
     setMode({ kind: "new" });
   }
@@ -49,6 +71,7 @@ export default function TeamsPage() {
   function openEdit(team: Team) {
     setName(team.name);
     setMemberIds(new Set(team.members.map((m) => m.id)));
+    resetSchedule(team);
     setFormError(null);
     setMode({ kind: "edit", id: team.id });
   }
@@ -66,7 +89,11 @@ export default function TeamsPage() {
     event.preventDefault();
     setSaving(true);
     setFormError(null);
-    const body = { name, memberIds: [...memberIds] };
+    const body = {
+      name,
+      memberIds: [...memberIds],
+      schedule: hasOverride ? { days, start, end } : null,
+    };
     try {
       if (mode.kind === "new") {
         await apiFetch("/teams", { method: "POST", body });
@@ -142,6 +169,26 @@ export default function TeamsPage() {
               </div>
             )}
           </div>
+
+          <div className="ms-field">
+            <label className="ms-checkline">
+              <input type="checkbox" checked={hasOverride} onChange={(e) => setHasOverride(e.target.checked)} />
+              Custom schedule for this team
+            </label>
+            <span className="muted" style={{ fontSize: 11.5, marginTop: 2 }}>
+              {hasOverride ? "This team uses the hours below instead of the company schedule." : "Inherits the company-wide work schedule."}
+            </span>
+          </div>
+          {hasOverride && (
+            <ScheduleFields
+              days={days}
+              start={start}
+              end={end}
+              onToggleDay={(i) => setDays((d) => d.map((v, idx) => (idx === i ? !v : v)))}
+              onStart={setStart}
+              onEnd={setEnd}
+            />
+          )}
 
           {formError && <p className="ms-banner error" style={{ marginTop: 4, marginBottom: 4 }}>{formError}</p>}
 

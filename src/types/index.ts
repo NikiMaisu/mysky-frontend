@@ -67,12 +67,21 @@ export interface Worker {
   active: boolean;
 }
 
+export interface WorkSchedule {
+  days: boolean[]; // [0]=Mon … [6]=Sun
+  start: string; // "HH:mm"
+  end: string; // "HH:mm"
+}
+
 export interface Team {
   id: number;
   name: string;
   active: boolean;
+  schedule: WorkSchedule | null; // per-team override; null = inherit global
   members: Worker[];
 }
+
+export type TimeUnit = "MINUTES" | "HOURS" | "DAYS";
 
 export type OrderStatus = "QUOTED" | "SCHEDULED" | "IN_PROGRESS" | "DONE" | "CANCELLED";
 
@@ -120,10 +129,35 @@ export interface Order {
   flatAddedMinutes: number;
   totalMinutes: number;
   totalCost: number;
+  finishOverridden: boolean;
   status: OrderStatus;
   notes: string | null;
   fixtures: OrderFixtureLine[];
   addons: OrderAddonLine[];
+}
+
+export interface CalendarOrder {
+  id: number;
+  orderNumber: number;
+  clientName: string;
+  address: string | null;
+  teamId: number | null;
+  teamName: string | null;
+  startAt: string;
+  finishAt: string;
+  status: OrderStatus;
+  totalMinutes: number;
+}
+
+export interface TeamRef {
+  id: number;
+  name: string;
+}
+
+export interface DayAvailability {
+  date: string; // YYYY-MM-DD (Tbilisi)
+  freeTeams: TeamRef[];
+  busyTeams: TeamRef[];
 }
 
 export interface OrderRequest {
@@ -137,7 +171,9 @@ export interface OrderRequest {
   squareMeters: number;
   graniteEnabled: boolean;
   perimeter?: number | null;
-  flatAddedMinutes?: number;
+  flatAddedValue?: number;
+  flatAddedUnit?: TimeUnit;
+  finishOverridden?: boolean;
   status?: OrderStatus;
   notes?: string;
   fixtures: { fixtureId: number; quantity: number }[];

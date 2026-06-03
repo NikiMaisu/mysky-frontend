@@ -12,6 +12,7 @@ const NAV = [
   { href: "/settings/granite", label: "Granite" },
   { href: "/settings/workers", label: "Workers" },
   { href: "/settings/teams", label: "Teams" },
+  { href: "/settings/schedule", label: "Work schedule" },
 ];
 
 function BrandMark() {

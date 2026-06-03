@@ -61,10 +61,13 @@ export default function Home() {
           </p>
           <div style={{ display: "flex", gap: 8, marginTop: 22, flexWrap: "wrap" }}>
             {user.role === "ADMIN" && (
-              <Link href="/orders" className="ms-btn accent">Orders</Link>
+              <Link href="/calendar" className="ms-btn accent">Schedule</Link>
             )}
             {user.role === "ADMIN" && (
-              <Link href="/settings" className="ms-btn primary">Configuration</Link>
+              <Link href="/orders" className="ms-btn">Orders</Link>
+            )}
+            {user.role === "ADMIN" && (
+              <Link href="/settings" className="ms-btn">Configuration</Link>
             )}
             <button type="button" onClick={handleLogout} className="ms-btn">Sign out</button>
           </div>
