@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ScheduleFields } from "@/components/ScheduleFields";
 import { apiFetch, ApiError } from "@/lib/api";
+import { useLang } from "@/lib/i18n";
 import type { Team, Worker } from "@/types";
 
 const DEFAULT_DAYS = [true, true, true, true, true, true, false];
@@ -10,6 +11,7 @@ const DEFAULT_DAYS = [true, true, true, true, true, true, false];
 type Mode = { kind: "closed" } | { kind: "new" } | { kind: "edit"; id: number };
 
 export default function TeamsPage() {
+  const { t } = useLang();
   const [teams, setTeams] = useState<Team[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,18 +31,18 @@ export default function TeamsPage() {
     setLoading(true);
     setError(null);
     try {
-      const [t, w] = await Promise.all([
+      const [ts, w] = await Promise.all([
         apiFetch<Team[]>("/teams"),
         apiFetch<Worker[]>("/workers"),
       ]);
-      setTeams(t);
+      setTeams(ts);
       setWorkers(w);
     } catch (e) {
-      setError(e instanceof ApiError ? `Failed to load (${e.status})` : "Failed to load");
+      setError(e instanceof ApiError ? t("common.failedLoadCode", { code: e.status }) : t("common.failedLoad"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -103,19 +105,19 @@ export default function TeamsPage() {
       setMode({ kind: "closed" });
       await load();
     } catch {
-      setFormError("Failed to save team.");
+      setFormError(t("team.failSave"));
     } finally {
       setSaving(false);
     }
   }
 
   async function onDelete(team: Team) {
-    if (!confirm(`Dissolve team "${team.name}"?`)) return;
+    if (!confirm(t("team.confirmDissolve", { name: team.name }))) return;
     try {
       await apiFetch(`/teams/${team.id}`, { method: "DELETE" });
       await load();
     } catch {
-      setError("Failed to delete team.");
+      setError(t("common.failedDelete"));
     }
   }
 
@@ -123,13 +125,11 @@ export default function TeamsPage() {
     <div>
       <div className="ms-ph">
         <div>
-          <div className="ms-ph-title">Teams</div>
-          <p className="ms-ph-sub">
-            Brigades assigned to orders. Membership can change without affecting past orders.
-          </p>
+          <div className="ms-ph-title">{t("team.title")}</div>
+          <p className="ms-ph-sub">{t("team.sub")}</p>
         </div>
         <button type="button" onClick={openNew} className="ms-btn accent" style={{ flexShrink: 0 }}>
-          Add new
+          {t("common.addNew")}
         </button>
       </div>
 
@@ -137,9 +137,9 @@ export default function TeamsPage() {
 
       {mode.kind !== "closed" && (
         <form onSubmit={onSubmit} className="ms-card ms-form-panel">
-          <h2>{mode.kind === "new" ? "New team" : "Edit team"}</h2>
+          <h2>{mode.kind === "new" ? t("team.new") : t("team.edit")}</h2>
           <div className="ms-field">
-            <span className="ms-label">Name</span>
+            <span className="ms-label">{t("set.name")}</span>
             <input
               type="text"
               required
@@ -151,9 +151,9 @@ export default function TeamsPage() {
           </div>
 
           <div className="ms-field">
-            <span className="ms-label">Members</span>
+            <span className="ms-label">{t("team.members")}</span>
             {workers.length === 0 ? (
-              <p className="muted" style={{ fontSize: 12.5 }}>No workers yet — add some on the Workers page.</p>
+              <p className="muted" style={{ fontSize: 12.5 }}>{t("team.noWorkers")}</p>
             ) : (
               <div className="ms-check-grid">
                 {workers.map((w) => (
@@ -173,10 +173,10 @@ export default function TeamsPage() {
           <div className="ms-field">
             <label className="ms-checkline">
               <input type="checkbox" checked={hasOverride} onChange={(e) => setHasOverride(e.target.checked)} />
-              Custom schedule for this team
+              {t("team.customSchedule")}
             </label>
             <span className="muted" style={{ fontSize: 11.5, marginTop: 2 }}>
-              {hasOverride ? "This team uses the hours below instead of the company schedule." : "Inherits the company-wide work schedule."}
+              {hasOverride ? t("team.customOn") : t("team.customOff")}
             </span>
           </div>
           {hasOverride && (
@@ -194,10 +194,10 @@ export default function TeamsPage() {
 
           <div className="ms-form-actions">
             <button type="submit" disabled={saving} className="ms-btn primary">
-              {saving ? "Saving…" : "Save"}
+              {saving ? t("common.saving") : t("common.save")}
             </button>
             <button type="button" onClick={() => setMode({ kind: "closed" })} className="ms-btn">
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </form>
@@ -207,16 +207,16 @@ export default function TeamsPage() {
         <table className="ms-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Members</th>
-              <th className="actions">Actions</th>
+              <th>{t("set.name")}</th>
+              <th>{t("team.colMembers")}</th>
+              <th className="actions">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={3} className="loading">Loading…</td></tr>
+              <tr><td colSpan={3} className="loading">{t("common.loading")}</td></tr>
             ) : teams.length === 0 ? (
-              <tr><td colSpan={3} className="empty">No teams yet.</td></tr>
+              <tr><td colSpan={3} className="empty">{t("team.none")}</td></tr>
             ) : (
               teams.map((team) => (
                 <tr key={team.id}>
@@ -226,10 +226,10 @@ export default function TeamsPage() {
                   </td>
                   <td className="actions">
                     <button type="button" onClick={() => openEdit(team)} className="ms-link">
-                      Edit
+                      {t("common.edit")}
                     </button>
                     <button type="button" onClick={() => onDelete(team)} className="ms-link danger">
-                      Dissolve
+                      {t("team.dissolve")}
                     </button>
                   </td>
                 </tr>

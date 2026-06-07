@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { ScheduleFields } from "@/components/ScheduleFields";
 import { apiFetch, ApiError } from "@/lib/api";
+import { useLang } from "@/lib/i18n";
 import type { WorkSchedule } from "@/types";
 
 export default function WorkSchedulePage() {
+  const { t } = useLang();
   const [days, setDays] = useState<boolean[]>([true, true, true, true, true, true, false]);
   const [start, setStart] = useState("10:00");
   const [end, setEnd] = useState("18:00");
@@ -38,23 +40,20 @@ export default function WorkSchedulePage() {
       await apiFetch("/work-schedule", { method: "PUT", body: { days, start, end } });
       setSaved(true);
     } catch (err) {
-      setError(err instanceof ApiError && err.status === 400 ? "Pick at least one day and an end time after the start." : "Failed to save.");
+      setError(err instanceof ApiError && err.status === 400 ? t("sched.invalid") : t("common.somethingWrong"));
     } finally {
       setSaving(false);
     }
   }
 
-  if (loading) return <div className="ms-center">Loading…</div>;
+  if (loading) return <div className="ms-center">{t("common.loading")}</div>;
 
   return (
     <div>
       <div className="ms-ph">
         <div>
-          <div className="ms-ph-title">Work schedule</div>
-          <p className="ms-ph-sub">
-            Company-wide working days and hours. Jobs are scheduled within these hours and roll over to the
-            next working day when they don&apos;t fit. Teams can override this on the Teams page.
-          </p>
+          <div className="ms-ph-title">{t("sched.title")}</div>
+          <p className="ms-ph-sub">{t("sched.sub")}</p>
         </div>
       </div>
 
@@ -68,9 +67,9 @@ export default function WorkSchedulePage() {
           onEnd={setEnd}
         />
         {error && <p className="ms-banner error" style={{ marginTop: 16 }}>{error}</p>}
-        {saved && <p className="ms-banner success" style={{ marginTop: 16 }}>Saved.</p>}
+        {saved && <p className="ms-banner success" style={{ marginTop: 16 }}>{t("common.saved")}</p>}
         <div className="ms-form-actions">
-          <button type="submit" className="ms-btn primary" disabled={saving}>{saving ? "Saving…" : "Save"}</button>
+          <button type="submit" className="ms-btn primary" disabled={saving}>{saving ? t("common.saving") : t("common.save")}</button>
         </div>
       </form>
     </div>

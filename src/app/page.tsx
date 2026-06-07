@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { addDays, dateKey, startOfDay } from "@/lib/calendar";
-import { formatDateTime, formatGel, statusLabel, statusTag } from "@/lib/orders";
+import { formatDateTime, formatGel, statusTag } from "@/lib/orders";
 import { useAuth } from "@/lib/auth";
+import { useLang } from "@/lib/i18n";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import type { DayAvailability, Order } from "@/types";
 
 function BrandMark() {
@@ -23,6 +25,7 @@ function BrandMark() {
 export default function Home() {
   const router = useRouter();
   const { user, loading, logout } = useAuth();
+  const { t, lang } = useLang();
 
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [freeToday, setFreeToday] = useState<DayAvailability | null>(null);
@@ -73,8 +76,8 @@ export default function Home() {
       .slice(0, 6);
   }, [orders]);
 
-  if (loading) return <main className="ms-page"><div className="ms-center">Loading…</div></main>;
-  if (!user) return <main className="ms-page"><div className="ms-center">Not signed in.</div></main>;
+  if (loading) return <main className="ms-page"><div className="ms-center">{t("common.loading")}</div></main>;
+  if (!user) return <main className="ms-page"><div className="ms-center">{t("dash.notSignedIn")}</div></main>;
 
   async function handleLogout() {
     await logout();
@@ -82,7 +85,7 @@ export default function Home() {
   }
 
   const initials = user.name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
-  const monthLabel = new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+  const monthLabel = new Date().toLocaleDateString(lang === "ka" ? "ka-GE" : "en-GB", { month: "long", year: "numeric" });
 
   return (
     <main className="ms-page">
@@ -92,76 +95,78 @@ export default function Home() {
           <span className="ms-brand-name">MySky</span>
         </div>
         <div className="spacer" />
-        <span className="ms-pill">{user.role.toLowerCase()}</span>
+        <LanguageToggle />
+        <span className="ms-pill">{t(`role.${user.role.toLowerCase()}`)}</span>
         <div className="ms-rail-avatar" title={user.name}>{initials}</div>
-        <button type="button" onClick={handleLogout} className="ms-btn sm">Sign out</button>
+        <button type="button" onClick={handleLogout} className="ms-btn sm">{t("common.signOut")}</button>
       </div>
 
       <div className="ms-page-body">
         <div className="ms-ph">
           <div>
-            <div className="ms-ph-title">Welcome, {user.name}</div>
-            <p className="ms-ph-sub">{isAdmin ? `Here's how ${monthLabel} is shaping up.` : "You're signed in."}</p>
+            <div className="ms-ph-title">{t("dash.welcome", { name: user.name })}</div>
+            <p className="ms-ph-sub">{isAdmin ? t("dash.subtitle", { month: monthLabel }) : t("dash.signedIn")}</p>
           </div>
         </div>
 
         {!isAdmin && (
           <div className="ms-card" style={{ padding: 24, maxWidth: 520 }}>
-            <p className="muted" style={{ fontSize: 13, margin: 0 }}>Your schedule and jobs will appear here.</p>
+            <p className="muted" style={{ fontSize: 13, margin: 0 }}>{t("dash.workerNote")}</p>
           </div>
         )}
 
         {isAdmin && (
           <>
             <div className="ms-quick">
-              <Link href="/orders/new" className="ms-btn accent">New order</Link>
-              <Link href="/calendar" className="ms-btn">Schedule</Link>
-              <Link href="/orders" className="ms-btn">Orders</Link>
-              <Link href="/settings" className="ms-btn">Configuration</Link>
+              <Link href="/orders/new" className="ms-btn accent">{t("nav.newOrder")}</Link>
+              <Link href="/calendar" className="ms-btn">{t("nav.schedule")}</Link>
+              <Link href="/orders" className="ms-btn">{t("nav.orders")}</Link>
+              <Link href="/reports" className="ms-btn">{t("nav.reports")}</Link>
+              <Link href="/settings" className="ms-btn">{t("nav.configuration")}</Link>
             </div>
 
             <div className="ms-dash-grid">
               <div className="ms-stats">
                 <div className="ms-card ms-stat">
-                  <div className="label">Orders this month</div>
+                  <div className="label">{t("dash.ordersThisMonth")}</div>
                   <div className="value">{stats ? stats.count : "—"}</div>
-                  <div className="sub">{stats ? `${stats.active} active · ${stats.completed} done` : ""}</div>
+                  <div className="sub">{stats ? t("dash.activeDone", { active: stats.active, done: stats.completed }) : ""}</div>
                 </div>
                 <div className="ms-card ms-stat">
-                  <div className="label">m² this month</div>
+                  <div className="label">{t("dash.m2ThisMonth")}</div>
                   <div className="value">{stats ? Math.round(stats.sqm).toLocaleString() : "—"}</div>
-                  <div className="sub">installed area</div>
+                  <div className="sub">{t("dash.installedArea")}</div>
                 </div>
                 <div className="ms-card ms-stat">
-                  <div className="label">Revenue this month</div>
+                  <div className="label">{t("dash.revenueThisMonth")}</div>
                   <div className="value">{stats ? formatGel(stats.revenue) : "—"}</div>
-                  <div className="sub">non-cancelled</div>
+                  <div className="sub">{t("dash.nonCancelled")}</div>
                 </div>
                 <div className="ms-card ms-stat">
-                  <div className="label">Completed</div>
+                  <div className="label">{t("dash.completed")}</div>
                   <div className="value">{stats ? stats.completed : "—"}</div>
-                  <div className="sub">this month</div>
+                  <div className="sub">{t("dash.thisMonth")}</div>
                 </div>
               </div>
 
               <aside style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div className="ms-card" style={{ padding: 16 }}>
-                  <p className="ms-panel-title">Free today</p>
+                  <p className="ms-panel-title">{t("dash.freeToday")}</p>
                   {!freeToday ? (
                     <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>—</p>
                   ) : freeToday.freeTeams.length === 0 ? (
-                    <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>Everyone&apos;s booked.</p>
+                    <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>{t("dash.everyoneBooked")}</p>
                   ) : (
                     <div className="ms-cal-free" style={{ marginTop: 0 }}>
-                      {freeToday.freeTeams.map((t) => <span key={t.id} className="ms-free-chip">{t.name}</span>)}
+                      {freeToday.freeTeams.map((team) => <span key={team.id} className="ms-free-chip">{team.name}</span>)}
                     </div>
                   )}
                 </div>
 
                 <div className="ms-card" style={{ padding: 16 }}>
-                  <p className="ms-panel-title">Upcoming</p>
+                  <p className="ms-panel-title">{t("dash.upcoming")}</p>
                   {upcoming.length === 0 ? (
-                    <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>Nothing scheduled ahead.</p>
+                    <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>{t("dash.nothingAhead")}</p>
                   ) : (
                     <div className="ms-upcoming">
                       {upcoming.map((o) => (
@@ -171,7 +176,7 @@ export default function Home() {
                             <div className="when">{formatDateTime(o.startAt)}{o.teamName ? ` · ${o.teamName}` : ""}</div>
                           </span>
                           <span className={"ms-detail-status " + statusTag(o.status)} style={{ flexShrink: 0 }}>
-                            <span className="dot" />{statusLabel(o.status)}
+                            <span className="dot" />{t(`status.${o.status}`)}
                           </span>
                         </Link>
                       ))}

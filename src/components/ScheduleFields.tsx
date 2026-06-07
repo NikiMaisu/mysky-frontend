@@ -1,6 +1,6 @@
 "use client";
 
-import { DAY_LABELS } from "@/lib/schedule";
+import { useLang } from "@/lib/i18n";
 
 export function ScheduleFields({
   days,
@@ -17,31 +17,32 @@ export function ScheduleFields({
   onStart: (v: string) => void;
   onEnd: (v: string) => void;
 }) {
+  const { t } = useLang();
   return (
     <>
       <div className="ms-field">
-        <span className="ms-label">Working days</span>
+        <span className="ms-label">{t("sched.days")}</span>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {DAY_LABELS.map((label, i) => (
+          {[0, 1, 2, 3, 4, 5, 6].map((i) => (
             <button
               type="button"
-              key={label}
+              key={i}
               onClick={() => onToggleDay(i)}
               className={"ms-btn sm" + (days[i] ? " primary" : "")}
               style={{ minWidth: 46, justifyContent: "center" }}
             >
-              {label}
+              {t(`dow.${i}`)}
             </button>
           ))}
         </div>
       </div>
       <div className="ms-form-grid">
         <div className="ms-field" style={{ marginBottom: 0 }}>
-          <span className="ms-label">Start time</span>
+          <span className="ms-label">{t("sched.start")}</span>
           <input type="time" className="ms-input" value={start} onChange={(e) => onStart(e.target.value)} />
         </div>
         <div className="ms-field" style={{ marginBottom: 0 }}>
-          <span className="ms-label">End time</span>
+          <span className="ms-label">{t("sched.end")}</span>
           <input type="time" className="ms-input" value={end} onChange={(e) => onEnd(e.target.value)} />
         </div>
       </div>

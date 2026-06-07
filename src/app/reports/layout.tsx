@@ -17,16 +17,15 @@ function BrandMark() {
   );
 }
 
-export default function OrdersLayout({ children }: { children: ReactNode }) {
+export default function ReportsLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const { t } = useLang();
 
   if (loading) {
     return <main className="ms-page"><div className="ms-center">{t("common.loading")}</div></main>;
   }
-
   if (!user || user.role !== "ADMIN") {
-    return <main className="ms-page"><div className="ms-center">{t("orders.adminOnly")}</div></main>;
+    return <main className="ms-page"><div className="ms-center">{t("rep.adminOnly")}</div></main>;
   }
 
   return (
@@ -36,8 +35,8 @@ export default function OrdersLayout({ children }: { children: ReactNode }) {
           <BrandMark />
           <span className="ms-brand-name">MySky</span>
         </Link>
-        <span className="muted" style={{ fontSize: 12 }}>/ {t("nav.orders")}</span>
-        <div className="spacer" style={{ flex: 1 }} />
+        <span className="muted" style={{ fontSize: 12 }}>/ {t("rep.title")}</span>
+        <div style={{ flex: 1 }} />
         <LanguageToggle />
       </div>
       <div className="ms-page-body">{children}</div>

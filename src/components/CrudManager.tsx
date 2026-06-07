@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
+import { useLang } from "@/lib/i18n";
 
 export type FieldType = "text" | "number" | "email" | "password" | "select";
 
@@ -44,6 +45,7 @@ export function CrudManager<T extends { id: number }>({
   toForm,
   rowLabel,
 }: CrudManagerProps<T>) {
+  const { t } = useLang();
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,11 +60,11 @@ export function CrudManager<T extends { id: number }>({
     try {
       setItems(await apiFetch<T[]>(path));
     } catch (e) {
-      setError(e instanceof ApiError ? `Failed to load (${e.status})` : "Failed to load");
+      setError(e instanceof ApiError ? t("common.failedLoadCode", { code: e.status }) : t("common.failedLoad"));
     } finally {
       setLoading(false);
     }
-  }, [path]);
+  }, [path, t]);
 
   useEffect(() => {
     void load();
@@ -104,11 +106,11 @@ export function CrudManager<T extends { id: number }>({
       await load();
     } catch (e) {
       if (e instanceof ApiError && e.status === 409) {
-        setFormError("That value conflicts with an existing record.");
+        setFormError(t("common.conflict"));
       } else if (e instanceof ApiError && e.status === 400) {
-        setFormError("Please check the fields and try again.");
+        setFormError(t("common.checkFields"));
       } else {
-        setFormError("Something went wrong. Please try again.");
+        setFormError(t("common.somethingWrong"));
       }
     } finally {
       setSaving(false);
@@ -116,12 +118,12 @@ export function CrudManager<T extends { id: number }>({
   }
 
   async function onDelete(row: T) {
-    if (!confirm(`Delete "${rowLabel(row)}"?`)) return;
+    if (!confirm(t("common.confirmDelete", { name: rowLabel(row) }))) return;
     try {
       await apiFetch(`${path}/${row.id}`, { method: "DELETE" });
       await load();
     } catch {
-      setError("Failed to delete.");
+      setError(t("common.failedDelete"));
     }
   }
 
@@ -133,7 +135,7 @@ export function CrudManager<T extends { id: number }>({
           {description && <p className="ms-ph-sub">{description}</p>}
         </div>
         <button type="button" onClick={openNew} className="ms-btn accent" style={{ flexShrink: 0 }}>
-          Add new
+          {t("common.addNew")}
         </button>
       </div>
 
@@ -141,7 +143,7 @@ export function CrudManager<T extends { id: number }>({
 
       {mode.kind !== "closed" && (
         <form onSubmit={onSubmit} className="ms-card ms-form-panel">
-          <h2>{mode.kind === "new" ? "New entry" : "Edit entry"}</h2>
+          <h2>{mode.kind === "new" ? t("common.newEntry") : t("common.editEntry")}</h2>
           <div className="ms-form-grid">
             {fields.map((field) => (
               <div key={field.name} className="ms-field" style={{ marginBottom: 0 }}>
@@ -175,10 +177,10 @@ export function CrudManager<T extends { id: number }>({
           {formError && <p className="ms-banner error" style={{ marginTop: 16 }}>{formError}</p>}
           <div className="ms-form-actions">
             <button type="submit" disabled={saving} className="ms-btn primary">
-              {saving ? "Saving…" : "Save"}
+              {saving ? t("common.saving") : t("common.save")}
             </button>
             <button type="button" onClick={() => setMode({ kind: "closed" })} className="ms-btn">
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </form>
@@ -191,17 +193,17 @@ export function CrudManager<T extends { id: number }>({
               {columns.map((col) => (
                 <th key={col.header}>{col.header}</th>
               ))}
-              <th className="actions">Actions</th>
+              <th className="actions">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={columns.length + 1} className="loading">Loading…</td>
+                <td colSpan={columns.length + 1} className="loading">{t("common.loading")}</td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + 1} className="empty">Nothing here yet.</td>
+                <td colSpan={columns.length + 1} className="empty">{t("common.nothingHere")}</td>
               </tr>
             ) : (
               items.map((row) => (
@@ -211,10 +213,10 @@ export function CrudManager<T extends { id: number }>({
                   ))}
                   <td className="actions">
                     <button type="button" onClick={() => openEdit(row)} className="ms-link">
-                      Edit
+                      {t("common.edit")}
                     </button>
                     <button type="button" onClick={() => onDelete(row)} className="ms-link danger">
-                      Delete
+                      {t("common.delete")}
                     </button>
                   </td>
                 </tr>

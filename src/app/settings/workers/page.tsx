@@ -1,28 +1,30 @@
 "use client";
 
 import { CrudManager } from "@/components/CrudManager";
+import { useLang } from "@/lib/i18n";
 import type { Worker } from "@/types";
 
 export default function WorkersPage() {
+  const { t } = useLang();
   return (
     <CrudManager<Worker>
-      title="Workers"
-      description="Worker accounts. They sign in with their email and can be grouped into teams."
+      title={t("wrk.title")}
+      description={t("wrk.sub")}
       path="/workers"
       rowLabel={(w) => w.name}
       columns={[
-        { header: "Name", cell: (w) => w.name },
-        { header: "Email", cell: (w) => w.email },
+        { header: t("set.name"), cell: (w) => w.name },
+        { header: t("wrk.email"), cell: (w) => w.email },
       ]}
       fields={[
-        { name: "name", label: "Name", type: "text" },
-        { name: "email", label: "Email", type: "email" },
+        { name: "name", label: t("set.name"), type: "text" },
+        { name: "email", label: t("wrk.email"), type: "email" },
         {
           name: "password",
-          label: "Password",
+          label: t("wrk.password"),
           type: "password",
           skipIfEmpty: true,
-          hintOnEdit: "Leave blank to keep current",
+          hintOnEdit: t("wrk.passwordKeep"),
         },
       ]}
       emptyForm={{ name: "", email: "", password: "" }}

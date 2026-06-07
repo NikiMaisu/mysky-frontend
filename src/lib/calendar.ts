@@ -44,15 +44,15 @@ export function dateKey(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-export function fmtMonthYear(d: Date): string {
-  return d.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+export function fmtMonthYear(d: Date, locale = "en-GB"): string {
+  return d.toLocaleDateString(locale, { month: "long", year: "numeric" });
 }
 
-export function fmtRange(from: Date, to: Date): string {
+export function fmtRange(from: Date, to: Date, locale = "en-GB"): string {
   const sameMonth = from.getMonth() === to.getMonth() && from.getFullYear() === to.getFullYear();
-  const f = from.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-  const t = to.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-  if (isSameDay(from, to)) return from.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const f = from.toLocaleDateString(locale, { day: "numeric", month: "short" });
+  const t = to.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
+  if (isSameDay(from, to)) return from.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   return sameMonth ? `${from.getDate()}–${t}` : `${f} – ${t}`;
 }
 

@@ -1,41 +1,39 @@
 "use client";
 
 import { CrudManager } from "@/components/CrudManager";
+import { useLang } from "@/lib/i18n";
 import type { Addon } from "@/types";
 
-const CATEGORY_LABEL: Record<string, string> = {
-  BLINDS_RAILING: "Blinds railing",
-  HVAC_CUTOUT: "HVAC cutout",
-  OTHER: "Other",
-};
-
 export default function AddonsPage() {
+  const { t } = useLang();
+  const catLabel = (c: string) =>
+    c === "BLINDS_RAILING" ? t("add.cat.blinds") : c === "HVAC_CUTOUT" ? t("add.cat.hvac") : t("add.cat.other");
   return (
     <CrudManager<Addon>
-      title="Add-ons"
-      description="Named add-on instances (blinds railing, HVAC cutout, etc.) picked when creating an order."
+      title={t("add.title")}
+      description={t("add.sub")}
       path="/addons"
       rowLabel={(a) => a.name}
       columns={[
-        { header: "Name", cell: (a) => a.name },
-        { header: "Category", cell: (a) => CATEGORY_LABEL[a.category] ?? a.category },
-        { header: "Cost", cell: (a) => `${a.cost} ₾` },
-        { header: "Install time", cell: (a) => `${a.installTimeMinutes} min` },
+        { header: t("set.name"), cell: (a) => a.name },
+        { header: t("add.category"), cell: (a) => catLabel(a.category) },
+        { header: t("fix.cost"), cell: (a) => `${a.cost} ₾` },
+        { header: t("fix.installTime"), cell: (a) => `${a.installTimeMinutes} min` },
       ]}
       fields={[
-        { name: "name", label: "Name", type: "text" },
+        { name: "name", label: t("set.name"), type: "text" },
         {
           name: "category",
-          label: "Category",
+          label: t("add.category"),
           type: "select",
           options: [
-            { value: "BLINDS_RAILING", label: "Blinds railing" },
-            { value: "HVAC_CUTOUT", label: "HVAC cutout" },
-            { value: "OTHER", label: "Other" },
+            { value: "BLINDS_RAILING", label: t("add.cat.blinds") },
+            { value: "HVAC_CUTOUT", label: t("add.cat.hvac") },
+            { value: "OTHER", label: t("add.cat.other") },
           ],
         },
-        { name: "cost", label: "Cost (₾)", type: "number", step: "0.01" },
-        { name: "installTimeMinutes", label: "Install time (minutes)", type: "number", step: "1" },
+        { name: "cost", label: t("fix.costField"), type: "number", step: "0.01" },
+        { name: "installTimeMinutes", label: t("fix.timeField"), type: "number", step: "1" },
       ]}
       emptyForm={{ name: "", category: "OTHER", cost: "", installTimeMinutes: "" }}
       toForm={(a) => ({

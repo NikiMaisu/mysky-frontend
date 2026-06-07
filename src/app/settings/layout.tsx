@@ -4,15 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
+import { useLang } from "@/lib/i18n";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 const NAV = [
-  { href: "/settings/materials", label: "Materials" },
-  { href: "/settings/fixtures", label: "Lighting fixtures" },
-  { href: "/settings/addons", label: "Add-ons" },
-  { href: "/settings/granite", label: "Granite" },
-  { href: "/settings/workers", label: "Workers" },
-  { href: "/settings/teams", label: "Teams" },
-  { href: "/settings/schedule", label: "Work schedule" },
+  { href: "/settings/materials", key: "set.materials" },
+  { href: "/settings/fixtures", key: "set.fixtures" },
+  { href: "/settings/addons", key: "set.addons" },
+  { href: "/settings/granite", key: "set.granite" },
+  { href: "/settings/workers", key: "set.workers" },
+  { href: "/settings/teams", key: "set.teams" },
+  { href: "/settings/schedule", key: "set.schedule" },
 ];
 
 function BrandMark() {
@@ -28,14 +30,15 @@ function BrandMark() {
 
 export default function SettingsLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
+  const { t } = useLang();
   const pathname = usePathname();
 
   if (loading) {
-    return <main className="ms-page"><div className="ms-center">Loading…</div></main>;
+    return <main className="ms-page"><div className="ms-center">{t("common.loading")}</div></main>;
   }
 
   if (!user || user.role !== "ADMIN") {
-    return <main className="ms-page"><div className="ms-center">Configuration is available to admins only.</div></main>;
+    return <main className="ms-page"><div className="ms-center">{t("set.adminOnly")}</div></main>;
   }
 
   return (
@@ -45,7 +48,9 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
           <BrandMark />
           <span className="ms-brand-name">MySky</span>
         </Link>
-        <span className="muted" style={{ fontSize: 12 }}>/ Configuration</span>
+        <span className="muted" style={{ fontSize: 12 }}>/ {t("set.configuration")}</span>
+        <div style={{ flex: 1 }} />
+        <LanguageToggle />
       </div>
 
       <div className="ms-page-body">
@@ -57,7 +62,7 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
                 href={item.href}
                 className={"ms-navlink" + (pathname === item.href ? " active" : "")}
               >
-                {item.label}
+                {t(item.key)}
               </Link>
             ))}
           </nav>

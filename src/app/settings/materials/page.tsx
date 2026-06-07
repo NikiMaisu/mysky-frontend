@@ -1,24 +1,26 @@
 "use client";
 
 import { CrudManager } from "@/components/CrudManager";
+import { useLang } from "@/lib/i18n";
 import type { Material } from "@/types";
 
 export default function MaterialsPage() {
+  const { t } = useLang();
   return (
     <CrudManager<Material>
-      title="Materials"
-      description="Ceiling materials with their price and install time per square meter."
+      title={t("mat.title")}
+      description={t("mat.sub")}
       path="/materials"
       rowLabel={(m) => m.name}
       columns={[
-        { header: "Name", cell: (m) => m.name },
-        { header: "Price / m²", cell: (m) => `${m.pricePerM2} ₾` },
-        { header: "Time / m²", cell: (m) => `${m.timePerM2Minutes} min` },
+        { header: t("set.name"), cell: (m) => m.name },
+        { header: t("mat.pricePerM2"), cell: (m) => `${m.pricePerM2} ₾` },
+        { header: t("mat.timePerM2"), cell: (m) => `${m.timePerM2Minutes} min` },
       ]}
       fields={[
-        { name: "name", label: "Name", type: "text" },
-        { name: "pricePerM2", label: "Price per m² (₾)", type: "number", step: "0.01" },
-        { name: "timePerM2Minutes", label: "Time per m² (minutes)", type: "number", step: "0.01" },
+        { name: "name", label: t("set.name"), type: "text" },
+        { name: "pricePerM2", label: t("mat.priceField"), type: "number", step: "0.01" },
+        { name: "timePerM2Minutes", label: t("mat.timeField"), type: "number", step: "0.01" },
       ]}
       emptyForm={{ name: "", pricePerM2: "", timePerM2Minutes: "" }}
       toForm={(m) => ({

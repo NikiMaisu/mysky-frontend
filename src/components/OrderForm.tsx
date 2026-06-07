@@ -9,10 +9,10 @@ import {
   formatMinutes,
   formatDateTime,
   fromLocalInput,
-  statusLabel,
   toLocalInput,
 } from "@/lib/orders";
 import { computeFinish, resolveSchedule, workdayMinutes } from "@/lib/schedule";
+import { useLang } from "@/lib/i18n";
 import type { Addon, Fixture, GraniteConfig, Material, Order, OrderRequest, OrderStatus, Team, TimeUnit, WorkSchedule } from "@/types";
 
 interface LineState {
@@ -28,8 +28,27 @@ function toLineState(refId: number | null, quantity: number): LineState {
   return { key: newKey(), refId: refId == null ? "" : String(refId), quantity: String(quantity) };
 }
 
-export function OrderForm({ initial }: { initial?: Order }) {
+export function OrderForm({
+  initial,
+  defaultStart,
+  defaultEnd,
+  defaultClient,
+  defaultTeamId,
+  defaultMaterialId,
+  defaultSquareMeters,
+  defaultStatus,
+}: {
+  initial?: Order;
+  defaultStart?: string;
+  defaultEnd?: string;
+  defaultClient?: string;
+  defaultTeamId?: string;
+  defaultMaterialId?: string;
+  defaultSquareMeters?: string;
+  defaultStatus?: OrderStatus;
+}) {
   const router = useRouter();
+  const { t } = useLang();
   const editing = !!initial;
 
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -40,20 +59,24 @@ export function OrderForm({ initial }: { initial?: Order }) {
   const [workSchedule, setWorkSchedule] = useState<WorkSchedule | null>(null);
   const [refLoading, setRefLoading] = useState(true);
 
-  const [clientName, setClientName] = useState(initial?.clientName ?? "");
+  const [clientName, setClientName] = useState(initial?.clientName ?? defaultClient ?? "");
   const [clientPhone, setClientPhone] = useState(initial?.clientPhone ?? "");
   const [address, setAddress] = useState(initial?.address ?? "");
-  const [startAt, setStartAt] = useState(toLocalInput(initial?.startAt) || toLocalInput(new Date().toISOString()));
-  const [teamId, setTeamId] = useState(initial?.teamId ? String(initial.teamId) : "");
-  const [materialId, setMaterialId] = useState(initial?.materialId ? String(initial.materialId) : "");
-  const [squareMeters, setSquareMeters] = useState(initial ? String(initial.squareMeters) : "");
+  const [startAt, setStartAt] = useState(
+    toLocalInput(initial?.startAt) || toLocalInput(defaultStart) || toLocalInput(new Date().toISOString()),
+  );
+  const [teamId, setTeamId] = useState(initial?.teamId ? String(initial.teamId) : defaultTeamId ?? "");
+  const [materialId, setMaterialId] = useState(initial?.materialId ? String(initial.materialId) : defaultMaterialId ?? "");
+  const [squareMeters, setSquareMeters] = useState(initial ? String(initial.squareMeters) : defaultSquareMeters ?? "");
   const [graniteEnabled, setGraniteEnabled] = useState(initial?.graniteEnabled ?? false);
   const [perimeter, setPerimeter] = useState(initial?.perimeter != null ? String(initial.perimeter) : "");
   const [flatValue, setFlatValue] = useState(initial ? String(initial.flatAddedMinutes) : "0");
   const [flatUnit, setFlatUnit] = useState<TimeUnit>("MINUTES");
-  const [customEnd, setCustomEnd] = useState(initial?.finishOverridden ?? false);
-  const [endValue, setEndValue] = useState(initial?.finishOverridden ? toLocalInput(initial.finishAt) : "");
-  const [status, setStatus] = useState<OrderStatus>(initial?.status ?? "QUOTED");
+  const [customEnd, setCustomEnd] = useState(initial?.finishOverridden ?? (!initial && !!defaultEnd));
+  const [endValue, setEndValue] = useState(
+    initial?.finishOverridden ? toLocalInput(initial.finishAt) : !initial && defaultEnd ? toLocalInput(defaultEnd) : "",
+  );
+  const [status, setStatus] = useState<OrderStatus>(initial?.status ?? defaultStatus ?? "QUOTED");
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [fixtureLines, setFixtureLines] = useState<LineState[]>(
     initial?.fixtures.map((f) => toLineState(f.fixtureId, f.quantity)) ?? [],
@@ -165,15 +188,15 @@ export function OrderForm({ initial }: { initial?: Order }) {
     e.preventDefault();
     setError(null);
     if (!materialId) {
-      setError("Pick a material.");
+      setError(t("form.errPickMaterial"));
       return;
     }
     if (graniteEnabled && !perimeter) {
-      setError("Perimeter is required when granite is enabled.");
+      setError(t("form.errPerimeter"));
       return;
     }
     if (customEnd && !endValue) {
-      setError("Set a custom end time or turn the override off.");
+      setError(t("form.errCustomEnd"));
       return;
     }
     setSaving(true);
@@ -207,7 +230,7 @@ export function OrderForm({ initial }: { initial?: Order }) {
       router.push("/orders");
       router.refresh();
     } catch (err) {
-      setError(err instanceof ApiError && err.status === 400 ? "Please check the highlighted fields." : "Failed to save the order.");
+      setError(err instanceof ApiError && err.status === 400 ? t("form.errCheck") : t("form.errSave"));
     } finally {
       setSaving(false);
     }
@@ -215,17 +238,17 @@ export function OrderForm({ initial }: { initial?: Order }) {
 
   async function onCancelOrder() {
     if (!initial) return;
-    if (!confirm(`Cancel order #${initial.orderNumber}?`)) return;
+    if (!confirm(t("form.confirmCancel", { n: initial.orderNumber }))) return;
     try {
       await apiFetch(`/orders/${initial.id}`, { method: "DELETE" });
       router.push("/orders");
       router.refresh();
     } catch {
-      setError("Failed to cancel the order.");
+      setError(t("form.errCancel"));
     }
   }
 
-  if (refLoading) return <div className="ms-center">Loading…</div>;
+  if (refLoading) return <div className="ms-center">{t("common.loading")}</div>;
 
   const shownFinish = customEnd && endValue ? new Date(endValue) : recommendedFinish;
 
@@ -233,8 +256,8 @@ export function OrderForm({ initial }: { initial?: Order }) {
     <form onSubmit={onSubmit}>
       <div className="ms-ph">
         <div>
-          <div className="ms-ph-title">{editing ? `Order #${initial!.orderNumber}` : "New order"}</div>
-          <p className="ms-ph-sub">{editing ? "Edit details — totals recalculate on save." : "Fill in the job; the summary updates live."}</p>
+          <div className="ms-ph-title">{editing ? t("form.orderNum", { n: initial!.orderNumber }) : t("nav.newOrder")}</div>
+          <p className="ms-ph-sub">{editing ? t("form.editSub") : t("form.newSub")}</p>
         </div>
       </div>
 
@@ -243,46 +266,46 @@ export function OrderForm({ initial }: { initial?: Order }) {
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 300px", gap: 24, alignItems: "start" }} className="ms-order-grid">
         <div>
           <div className="ms-card ms-form-panel">
-            <h2>Client</h2>
+            <h2>{t("form.client")}</h2>
             <div className="ms-field">
-              <span className="ms-label">Client name</span>
+              <span className="ms-label">{t("form.clientName")}</span>
               <input className="ms-input" required value={clientName} onChange={(e) => setClientName(e.target.value)} />
             </div>
             <div className="ms-form-grid">
               <div className="ms-field" style={{ marginBottom: 0 }}>
-                <span className="ms-label">Phone</span>
+                <span className="ms-label">{t("form.phone")}</span>
                 <input className="ms-input" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} />
               </div>
               <div className="ms-field" style={{ marginBottom: 0 }}>
-                <span className="ms-label">Address</span>
+                <span className="ms-label">{t("form.address")}</span>
                 <input className="ms-input" value={address} onChange={(e) => setAddress(e.target.value)} />
               </div>
             </div>
           </div>
 
           <div className="ms-card ms-form-panel">
-            <h2>Scheduling</h2>
+            <h2>{t("form.scheduling")}</h2>
             <div className="ms-form-grid">
               <div className="ms-field" style={{ marginBottom: 0 }}>
-                <span className="ms-label">Start</span>
+                <span className="ms-label">{t("form.start")}</span>
                 <input type="datetime-local" className="ms-input" required value={startAt} onChange={(e) => setStartAt(e.target.value)} />
               </div>
               <div className="ms-field" style={{ marginBottom: 0 }}>
-                <span className="ms-label">Team / brigade</span>
+                <span className="ms-label">{t("form.team")}</span>
                 <select className="ms-select" value={teamId} onChange={(e) => setTeamId(e.target.value)}>
-                  <option value="">Unassigned</option>
-                  {teams.map((t) => (
-                    <option key={t.id} value={t.id}>{t.name}{t.schedule ? " (custom hours)" : ""}</option>
+                  <option value="">{t("form.unassigned")}</option>
+                  {teams.map((tm) => (
+                    <option key={tm.id} value={tm.id}>{tm.name}{tm.schedule ? t("form.customHours") : ""}</option>
                   ))}
                 </select>
               </div>
             </div>
             <div className="ms-field" style={{ marginTop: 14, marginBottom: 0 }}>
-              <span className="ms-label">Status</span>
+              <span className="ms-label">{t("orders.status")}</span>
               <div className="ms-seg" style={{ flexWrap: "wrap" }}>
                 {ORDER_STATUSES.map((s) => (
                   <button type="button" key={s} className={status === s ? "on" : ""} onClick={() => setStatus(s)}>
-                    {statusLabel(s)}
+                    {t(`status.${s}`)}
                   </button>
                 ))}
               </div>
@@ -290,36 +313,36 @@ export function OrderForm({ initial }: { initial?: Order }) {
           </div>
 
           <div className="ms-card ms-form-panel">
-            <h2>Material &amp; area</h2>
+            <h2>{t("form.materialArea")}</h2>
             <div className="ms-form-grid">
               <div className="ms-field" style={{ marginBottom: 0 }}>
-                <span className="ms-label">Material</span>
+                <span className="ms-label">{t("form.material")}</span>
                 <select className="ms-select" required value={materialId} onChange={(e) => setMaterialId(e.target.value)}>
-                  <option value="">Select…</option>
+                  <option value="">{t("common.select")}</option>
                   {materials.map((m) => (
                     <option key={m.id} value={m.id}>{m.name}</option>
                   ))}
                 </select>
               </div>
               <div className="ms-field" style={{ marginBottom: 0 }}>
-                <span className="ms-label">Area (m²)</span>
+                <span className="ms-label">{t("form.area")}</span>
                 <input type="number" step="0.01" min="0" className="ms-input" required value={squareMeters} onChange={(e) => setSquareMeters(e.target.value)} />
               </div>
             </div>
             <label className="ms-checkline" style={{ marginTop: 14 }}>
               <input type="checkbox" checked={graniteEnabled} onChange={(e) => setGraniteEnabled(e.target.checked)} />
-              Granite perimeter
+              {t("form.granite")}
             </label>
             {graniteEnabled && (
               <div className="ms-field" style={{ marginTop: 10, marginBottom: 0, maxWidth: 220 }}>
-                <span className="ms-label">Perimeter (m)</span>
+                <span className="ms-label">{t("form.perimeter")}</span>
                 <input type="number" step="0.01" min="0" className="ms-input" value={perimeter} onChange={(e) => setPerimeter(e.target.value)} />
               </div>
             )}
           </div>
 
           <LineEditor
-            title="Lighting fixtures"
+            title={t("form.fixtures")}
             lines={fixtureLines}
             options={fixtures.map((f) => ({ id: f.id, label: f.name }))}
             onChange={(key, patch) => setLine(setFixtureLines, key, patch)}
@@ -328,7 +351,7 @@ export function OrderForm({ initial }: { initial?: Order }) {
           />
 
           <LineEditor
-            title="Add-ons"
+            title={t("form.addons")}
             lines={addonLines}
             options={addons.map((a) => ({ id: a.id, label: a.name }))}
             onChange={(key, patch) => setLine(setAddonLines, key, patch)}
@@ -337,23 +360,23 @@ export function OrderForm({ initial }: { initial?: Order }) {
           />
 
           <div className="ms-card ms-form-panel">
-            <h2>Extra time &amp; notes</h2>
+            <h2>{t("form.extra")}</h2>
             <div className="ms-field">
-              <span className="ms-label">Flat added time</span>
+              <span className="ms-label">{t("form.flatAdded")}</span>
               <div className="ms-line-row" style={{ gridTemplateColumns: "1fr 130px", maxWidth: 320 }}>
                 <input type="number" step="0.5" min="0" className="ms-input" value={flatValue} onChange={(e) => setFlatValue(e.target.value)} />
                 <select className="ms-select" value={flatUnit} onChange={(e) => setFlatUnit(e.target.value as TimeUnit)}>
-                  <option value="MINUTES">minutes</option>
-                  <option value="HOURS">hours</option>
-                  <option value="DAYS">days</option>
+                  <option value="MINUTES">{t("form.unit.minutes")}</option>
+                  <option value="HOURS">{t("form.unit.hours")}</option>
+                  <option value="DAYS">{t("form.unit.days")}</option>
                 </select>
               </div>
               {flatUnit === "DAYS" && (
-                <span className="muted" style={{ fontSize: 11, marginTop: 4 }}>1 day = {Math.round(workdayMin)} min (this schedule&apos;s workday)</span>
+                <span className="muted" style={{ fontSize: 11, marginTop: 4 }}>{t("form.dayHint", { min: Math.round(workdayMin) })}</span>
               )}
             </div>
             <div className="ms-field" style={{ marginBottom: 0 }}>
-              <span className="ms-label">Notes</span>
+              <span className="ms-label">{t("form.notes")}</span>
               <textarea className="ms-textarea" value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
           </div>
@@ -368,28 +391,28 @@ export function OrderForm({ initial }: { initial?: Order }) {
               </div>
             ))}
             {calc.rows.length === 0 && (
-              <div className="ms-calc-row"><span className="lbl">Pick a material to start</span><span /></div>
+              <div className="ms-calc-row"><span className="lbl">{t("form.pickMaterialHint")}</span><span /></div>
             )}
             <div className="ms-calc-total">
               <div>
-                <div className="lbl">Total cost</div>
+                <div className="lbl">{t("form.totalCost")}</div>
                 <div className="big">{formatGel(calc.cost)}</div>
               </div>
             </div>
             <div className="ms-calc-row" style={{ marginTop: 6 }}>
-              <span className="lbl">Est. work time</span>
+              <span className="lbl">{t("form.estTime")}</span>
               <span>{formatMinutes(calc.minutes)}</span>
             </div>
             {recommendedFinish && (
               <div className="ms-calc-row">
-                <span className="lbl">Recommended finish</span>
+                <span className="lbl">{t("form.recommendedFinish")}</span>
                 <span>{formatDateTime(recommendedFinish.toISOString())}</span>
               </div>
             )}
 
             <label className="ms-checkline" style={{ marginTop: 12 }}>
               <input type="checkbox" checked={customEnd} onChange={(e) => toggleCustomEnd(e.target.checked)} />
-              Set a custom end time
+              {t("form.customEnd")}
             </label>
             {customEnd && (
               <input
@@ -402,7 +425,7 @@ export function OrderForm({ initial }: { initial?: Order }) {
             )}
             {shownFinish && (
               <div className="ms-calc-row" style={{ marginTop: 8 }}>
-                <span className="lbl">{customEnd ? "End (custom)" : "Finish"}</span>
+                <span className="lbl">{customEnd ? t("form.endCustom") : t("form.finish")}</span>
                 <span>{formatDateTime(shownFinish.toISOString())}</span>
               </div>
             )}
@@ -410,11 +433,11 @@ export function OrderForm({ initial }: { initial?: Order }) {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 14 }}>
             <button type="submit" className="ms-btn primary" disabled={saving} style={{ justifyContent: "center" }}>
-              {saving ? "Saving…" : editing ? "Save changes" : "Create order"}
+              {saving ? t("common.saving") : editing ? t("form.saveChanges") : t("form.createOrder")}
             </button>
             {editing && status !== "CANCELLED" && (
               <button type="button" className="ms-btn danger" onClick={onCancelOrder} style={{ justifyContent: "center" }}>
-                Cancel order
+                {t("form.cancelOrder")}
               </button>
             )}
           </div>
@@ -439,25 +462,26 @@ function LineEditor({
   onAdd: () => void;
   onRemove: (key: string) => void;
 }) {
+  const { t } = useLang();
   return (
     <div className="ms-card ms-form-panel">
       <h2>{title}</h2>
       <div className="ms-extras">
-        {lines.length === 0 && <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>None added.</p>}
+        {lines.length === 0 && <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>{t("common.none")}</p>}
         {lines.map((l) => (
           <div className="ms-line-row" key={l.key}>
             <select className="ms-select" value={l.refId} onChange={(e) => onChange(l.key, { refId: e.target.value })}>
-              <option value="">Select…</option>
+              <option value="">{t("common.select")}</option>
               {options.map((o) => (
                 <option key={o.id} value={o.id}>{o.label}</option>
               ))}
             </select>
-            <input type="number" step="0.01" min="0" className="ms-input" value={l.quantity} onChange={(e) => onChange(l.key, { quantity: e.target.value })} placeholder="Qty" />
+            <input type="number" step="0.01" min="0" className="ms-input" value={l.quantity} onChange={(e) => onChange(l.key, { quantity: e.target.value })} placeholder={t("form.qty")} />
             <button type="button" className="ms-line-remove" onClick={() => onRemove(l.key)} aria-label="Remove">×</button>
           </div>
         ))}
       </div>
-      <button type="button" className="ms-extra-add" onClick={onAdd}>+ Add</button>
+      <button type="button" className="ms-extra-add" onClick={onAdd}>{t("common.add")}</button>
     </div>
   );
 }

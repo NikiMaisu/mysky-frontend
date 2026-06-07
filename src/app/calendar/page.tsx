@@ -1,8 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarMonthGrid, CalendarTimeGrid } from "@/components/CalendarViews";
+import { OrderDrawer } from "@/components/OrderDrawer";
+import { QuickCreateDrawer } from "@/components/QuickCreateDrawer";
 import { apiFetch, ApiError } from "@/lib/api";
 import {
   type CalendarView,
@@ -18,11 +19,15 @@ import {
   viewRange,
 } from "@/lib/calendar";
 import { resolveSchedule } from "@/lib/schedule";
+import { useLang } from "@/lib/i18n";
 import type { CalendarOrder, DayAvailability, Team, WorkSchedule } from "@/types";
 
 export default function CalendarPage() {
-  const router = useRouter();
+  const { t, lang } = useLang();
+  const locale = lang === "ka" ? "ka-GE" : "en-GB";
   const [view, setView] = useState<CalendarView>("week");
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [createRange, setCreateRange] = useState<{ start: Date; end: Date | null } | null>(null);
   const [anchor, setAnchor] = useState<Date>(() => startOfDay(new Date()));
   const today = useMemo(() => startOfDay(new Date()), []);
 
@@ -70,11 +75,11 @@ export default function CalendarPage() {
       setOrders(o);
       setAvail(a);
     } catch (e) {
-      setError(e instanceof ApiError ? `Failed to load (${e.status})` : "Failed to load");
+      setError(e instanceof ApiError ? t("common.failedLoadCode", { code: e.status }) : t("common.failedLoad"));
     } finally {
       setLoading(false);
     }
-  }, [from, to]);
+  }, [from, to, t]);
 
   useEffect(() => {
     void load();
@@ -108,8 +113,12 @@ export default function CalendarPage() {
     setView("day");
   }
 
+  function startCreate(start: Date, end: Date | null) {
+    setCreateRange({ start, end });
+  }
+
   const label =
-    view === "month" ? fmtMonthYear(anchor) : view === "week" ? fmtRange(startOfWeek(anchor), addDays(startOfWeek(anchor), 6)) : fmtRange(anchor, anchor);
+    view === "month" ? fmtMonthYear(anchor, locale) : view === "week" ? fmtRange(startOfWeek(anchor), addDays(startOfWeek(anchor), 6), locale) : fmtRange(anchor, anchor, locale);
 
   const dayAvail = view === "day" ? availByDay.get(dateKey(startOfDay(anchor))) : undefined;
 
@@ -117,12 +126,12 @@ export default function CalendarPage() {
     <div>
       <div className="ms-header" style={{ padding: "0 0 16px" }}>
         <div>
-          <div className="ms-h-title">Schedule</div>
+          <div className="ms-h-title">{t("cal.title")}</div>
           <div className="ms-h-date">{label}</div>
         </div>
         <div className="ms-h-nav">
           <button onClick={() => navigate(-1)} aria-label="Previous">‹</button>
-          <button className="today-btn" onClick={() => setAnchor(today)}>Today</button>
+          <button className="today-btn" onClick={() => setAnchor(today)}>{t("cal.today")}</button>
           <button onClick={() => navigate(1)} aria-label="Next">›</button>
         </div>
         <input
@@ -136,33 +145,33 @@ export default function CalendarPage() {
         <div className="ms-view-switch">
           {(["day", "week", "month"] as CalendarView[]).map((v) => (
             <button key={v} className={view === v ? "on" : ""} onClick={() => setView(v)}>
-              {v[0].toUpperCase() + v.slice(1)}
+              {t(`cal.${v}`)}
             </button>
           ))}
         </div>
       </div>
 
       {error && <p className="ms-banner error" style={{ marginBottom: 16 }}>{error}</p>}
-      {loading && <p className="muted" style={{ fontSize: 12.5, marginBottom: 8 }}>Loading…</p>}
+      {loading && <p className="muted" style={{ fontSize: 12.5, marginBottom: 8 }}>{t("common.loading")}</p>}
 
       {view === "day" && (
         <>
           <div className="ms-cal-freebar" style={{ borderRadius: "var(--r-lg) var(--r-lg) 0 0", border: "1px solid var(--border)", borderBottom: 0 }}>
-            <span className="lbl">Free today</span>
+            <span className="lbl">{t("cal.freeToday")}</span>
             {!dayAvail || dayAvail.freeTeams.length === 0 ? (
-              <span className="ms-free-none">{dayAvail ? "Fully booked" : "No teams"}</span>
+              <span className="ms-free-none">{dayAvail ? t("cal.fullyBooked") : t("cal.noTeams")}</span>
             ) : (
-              dayAvail.freeTeams.map((t) => <span key={t.id} className="ms-free-chip">{t.name}</span>)
+              dayAvail.freeTeams.map((team) => <span key={team.id} className="ms-free-chip">{team.name}</span>)
             )}
           </div>
           {globalSchedule && (
-            <CalendarTimeGrid days={days} today={today} orders={orders} scheduleFor={scheduleFor} availByDay={availByDay} onPickOrder={(id) => router.push(`/orders/${id}/edit`)} />
+            <CalendarTimeGrid days={days} today={today} orders={orders} scheduleFor={scheduleFor} availByDay={availByDay} onPickOrder={setSelectedId} onCreateRange={startCreate} />
           )}
         </>
       )}
 
       {view === "week" && globalSchedule && (
-        <CalendarTimeGrid days={days} today={today} orders={orders} scheduleFor={scheduleFor} availByDay={availByDay} onPickOrder={(id) => router.push(`/orders/${id}/edit`)} />
+        <CalendarTimeGrid days={days} today={today} orders={orders} scheduleFor={scheduleFor} availByDay={availByDay} onPickOrder={setSelectedId} onCreateRange={startCreate} />
       )}
 
       {view === "month" && globalSchedule && (
@@ -174,9 +183,12 @@ export default function CalendarPage() {
           scheduleFor={scheduleFor}
           availByDay={availByDay}
           onPickDay={pickDayFromMonth}
-          onPickOrder={(id) => router.push(`/orders/${id}/edit`)}
+          onPickOrder={setSelectedId}
         />
       )}
+
+      <OrderDrawer orderId={selectedId} onClose={() => setSelectedId(null)} />
+      <QuickCreateDrawer range={createRange} onClose={() => setCreateRange(null)} onCreated={load} />
     </div>
   );
 }

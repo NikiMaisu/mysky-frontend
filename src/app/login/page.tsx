@@ -3,6 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
 import { useAuth } from "@/lib/auth";
+import { useLang } from "@/lib/i18n";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { ApiError } from "@/lib/api";
 
 export default function LoginPage() {
@@ -36,6 +38,7 @@ function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const { login } = useAuth();
+  const { t } = useLang();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -52,9 +55,9 @@ function LoginForm() {
       router.refresh();
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
-        setError("Invalid email or password.");
+        setError(t("login.invalid"));
       } else {
-        setError("Something went wrong. Please try again.");
+        setError(t("common.somethingWrong"));
       }
     } finally {
       setSubmitting(false);
@@ -65,16 +68,19 @@ function LoginForm() {
     <div className="ms-auth">
       <form onSubmit={onSubmit} className="ms-card ms-auth-card">
         <div className="ms-auth-head">
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+            <LanguageToggle />
+          </div>
           <div className="ms-brand">
             <BrandMark />
             <span className="ms-brand-name">MySky</span>
           </div>
-          <div className="ms-auth-title">Sign in</div>
-          <div className="ms-auth-sub">Internal scheduling for stretch ceiling crews</div>
+          <div className="ms-auth-title">{t("login.title")}</div>
+          <div className="ms-auth-sub">{t("brand.sub")}</div>
         </div>
 
         <div className="ms-field">
-          <span className="ms-label">Email</span>
+          <span className="ms-label">{t("login.email")}</span>
           <input
             type="email"
             autoComplete="email"
@@ -86,7 +92,7 @@ function LoginForm() {
         </div>
 
         <div className="ms-field">
-          <span className="ms-label">Password</span>
+          <span className="ms-label">{t("login.password")}</span>
           <input
             type="password"
             autoComplete="current-password"
@@ -100,7 +106,7 @@ function LoginForm() {
         {error && <p className="ms-banner error" style={{ marginBottom: 14 }}>{error}</p>}
 
         <button type="submit" disabled={submitting} className="ms-btn primary" style={{ width: "100%", justifyContent: "center" }}>
-          {submitting ? "Signing in…" : "Sign in"}
+          {submitting ? t("login.signingIn") : t("login.title")}
         </button>
       </form>
     </div>

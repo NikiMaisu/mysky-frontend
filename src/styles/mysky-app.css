@@ -198,6 +198,20 @@ body {
 }
 .ms-free-none { font-size: 10px; color: var(--mute); }
 
+/* drag-to-create selection on the time grid */
+.ms-cal-select {
+  background: oklch(0.56 0.13 245 / 0.16);
+  border: 1px dashed var(--accent);
+  border-radius: 7px;
+  z-index: 3;
+  pointer-events: none;
+  display: flex; align-items: flex-start; justify-content: flex-end;
+}
+.ms-cal-select-lbl {
+  font-size: 10px; font-variant-numeric: tabular-nums;
+  color: var(--accent-2); padding: 2px 5px; font-weight: 500;
+}
+
 /* day-view single column gets a wider, friendlier free list */
 .ms-cal-freebar {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -220,6 +234,12 @@ body {
 
 /* clickable event/pill keyboard affordance */
 .ms-event, .ms-month-pill { cursor: pointer; }
+
+/* drawer overlays the whole viewport at app level (mockup used absolute in a frame) */
+.ms-scrim { position: fixed; }
+.ms-drawer { position: fixed; }
+.ms-detail-section p.notes { font-size: 13px; color: var(--ink-2); white-space: pre-wrap; margin: 0; }
+@media (max-width: 520px) { .ms-drawer { width: 100%; } }
 
 /* ===== dashboard ===== */
 .ms-dash-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
