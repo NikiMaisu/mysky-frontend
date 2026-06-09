@@ -85,6 +85,11 @@ export const translations: Record<string, Entry> = {
   "orders.colTeam": { en: "Team", ka: "ბრიგადა" },
   "orders.colTotal": { en: "Total", ka: "სულ" },
   "orders.none": { en: "No orders yet.", ka: "ჯერ შეკვეთები არ არის." },
+  "exp.export": { en: "Export", ka: "ექსპორტი" },
+  "exp.from": { en: "From", ka: "დან" },
+  "exp.to": { en: "To", ka: "მდე" },
+  "exp.csv": { en: "CSV", ka: "CSV" },
+  "exp.excel": { en: "Excel", ka: "Excel" },
 
   // --- order form ---
   "form.orderNum": { en: "Order #{n}", ka: "შეკვეთა #{n}" },

@@ -32,12 +32,16 @@ async function proxy(request: Request, segments: string[]): Promise<Response> {
   }
 
   const upstream = await fetch(targetUrl, init);
-  const body = await upstream.text();
+
+  // Stream the body through unchanged so binary downloads (e.g. .xlsx) aren't
+  // corrupted by text decoding; preserve content-type and the download header.
   const responseHeaders = new Headers();
   const contentType = upstream.headers.get("content-type");
   if (contentType) responseHeaders.set("content-type", contentType);
+  const contentDisposition = upstream.headers.get("content-disposition");
+  if (contentDisposition) responseHeaders.set("content-disposition", contentDisposition);
 
-  return new NextResponse(body || null, {
+  return new NextResponse(upstream.body, {
     status: upstream.status,
     headers: responseHeaders,
   });

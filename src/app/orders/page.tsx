@@ -13,6 +13,25 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<OrderStatus | "">("");
+  const [exportFrom, setExportFrom] = useState("");
+  const [exportTo, setExportTo] = useState("");
+
+  function downloadExport(format: "csv" | "xlsx") {
+    const qs = new URLSearchParams({ format });
+    if (status) qs.set("status", status);
+    if (exportFrom) qs.set("from", new Date(exportFrom).toISOString());
+    if (exportTo) {
+      const end = new Date(exportTo);
+      end.setDate(end.getDate() + 1); // inclusive of the chosen end day
+      qs.set("to", end.toISOString());
+    }
+    const a = document.createElement("a");
+    a.href = `/api/orders/export?${qs.toString()}`;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -43,7 +62,7 @@ export default function OrdersPage() {
         </Link>
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center", flexWrap: "wrap" }}>
         <span className="ms-label" style={{ marginRight: 2 }}>{t("orders.status")}</span>
         <div className="ms-seg" style={{ flexWrap: "wrap" }}>
           <button type="button" className={status === "" ? "on" : ""} onClick={() => setStatus("")}>{t("orders.all")}</button>
@@ -53,6 +72,20 @@ export default function OrdersPage() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
+        <span className="ms-label" style={{ marginRight: 2 }}>{t("exp.export")}</span>
+        <label className="row-flex" style={{ gap: 4, fontSize: 12 }}>
+          <span className="muted">{t("exp.from")}</span>
+          <input type="date" className="ms-input" style={{ width: "auto" }} value={exportFrom} onChange={(e) => setExportFrom(e.target.value)} />
+        </label>
+        <label className="row-flex" style={{ gap: 4, fontSize: 12 }}>
+          <span className="muted">{t("exp.to")}</span>
+          <input type="date" className="ms-input" style={{ width: "auto" }} value={exportTo} onChange={(e) => setExportTo(e.target.value)} />
+        </label>
+        <button type="button" className="ms-btn sm" onClick={() => downloadExport("csv")}>{t("exp.csv")}</button>
+        <button type="button" className="ms-btn sm" onClick={() => downloadExport("xlsx")}>{t("exp.excel")}</button>
       </div>
 
       {error && <p className="ms-banner error" style={{ marginBottom: 16 }}>{error}</p>}
