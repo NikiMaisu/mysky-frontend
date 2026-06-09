@@ -57,7 +57,8 @@ body {
 
 /* ---- generic page wrapper (centered, branded top bar) ---- */
 .ms-page {
-  min-height: 100dvh;
+  flex: 1;
+  min-height: 0;
   display: flex; flex-direction: column;
   background: oklch(0.97 0.004 80);
 }
@@ -68,6 +69,24 @@ body {
   border-bottom: 1px solid var(--border);
 }
 .ms-page-bar .spacer { flex: 1; }
+
+/* ===== global top navigation ===== */
+.ms-topnav {
+  display: flex; align-items: center; gap: 16px;
+  padding: 10px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 10;
+}
+.ms-nav { display: flex; align-items: center; gap: 2px; min-width: 0; overflow-x: auto; }
+.ms-nav a {
+  padding: 7px 11px; border-radius: 6px;
+  font-size: 13px; font-weight: 500; white-space: nowrap;
+  color: var(--ink-2); text-decoration: none;
+}
+.ms-nav a:hover { background: var(--surface-3); color: var(--ink); }
+.ms-nav a.active { background: var(--ink); color: #fff; }
+.ms-topnav .spacer { flex: 1; }
 .ms-page-body {
   flex: 1;
   width: 100%;
@@ -198,6 +217,10 @@ body {
 }
 .ms-free-none { font-size: 10px; color: var(--mute); }
 
+/* align the hour-label column with the schedule gridlines (mockup shifted it
+   -6px, pushing the hours column's row borders out of sync with the day cells) */
+.ms-cal-hour-label { top: 0; }
+
 /* drag-to-create selection on the time grid */
 .ms-cal-select {
   background: oklch(0.56 0.13 245 / 0.16);
@@ -247,8 +270,9 @@ body {
 .ms-stat { padding: 16px 18px; }
 .ms-stat .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--mute); }
 .ms-stat .value {
-  font-size: 26px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink);
+  font-size: 22px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink);
   margin-top: 6px; font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere; min-width: 0;
 }
 .ms-stat .sub { font-size: 12px; color: var(--mute); margin-top: 3px; }
 .ms-quick { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }

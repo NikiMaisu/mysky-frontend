@@ -6,7 +6,7 @@ import { daySegment } from "@/lib/schedule";
 import { useLang } from "@/lib/i18n";
 import type { CalendarOrder, DayAvailability, WorkSchedule } from "@/types";
 
-const HOUR_START = 7;
+const HOUR_START = 8;
 const HOUR_END = 20;
 const HOUR_PX = 60;
 const GRID_HEIGHT = (HOUR_END - HOUR_START + 1) * HOUR_PX;

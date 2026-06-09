@@ -42,6 +42,7 @@ export const translations: Record<string, Entry> = {
   "login.invalid": { en: "Invalid email or password.", ka: "არასწორი ელ. ფოსტა ან პაროლი." },
 
   // --- nav / sections ---
+  "nav.dashboard": { en: "Dashboard", ka: "მთავარი" },
   "nav.schedule": { en: "Schedule", ka: "გრაფიკი" },
   "nav.orders": { en: "Orders", ka: "შეკვეთები" },
   "nav.configuration": { en: "Configuration", ka: "კონფიგურაცია" },
