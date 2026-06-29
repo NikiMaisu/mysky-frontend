@@ -39,7 +39,7 @@ function LoginForm() {
   const params = useSearchParams();
   const { login } = useAuth();
   const { t } = useLang();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +49,7 @@ function LoginForm() {
     setError(null);
     setSubmitting(true);
     try {
-      await login({ email, password });
+      await login({ identifier, password });
       const redirect = params.get("redirect") ?? "/";
       router.replace(redirect);
       router.refresh();
@@ -82,11 +82,11 @@ function LoginForm() {
         <div className="ms-field">
           <span className="ms-label">{t("login.email")}</span>
           <input
-            type="email"
-            autoComplete="email"
+            type="text"
+            autoComplete="username"
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
             className="ms-input"
           />
         </div>

@@ -13,7 +13,7 @@ export interface User {
 }
 
 export interface LoginRequest {
-  email: string;
+  identifier: string;
   password: string;
 }
 
@@ -63,7 +63,8 @@ export interface GraniteConfig {
 export interface Worker {
   id: number;
   name: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
   active: boolean;
 }
 

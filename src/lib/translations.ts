@@ -36,10 +36,10 @@ export const translations: Record<string, Entry> = {
 
   // --- login ---
   "login.title": { en: "Sign in", ka: "შესვლა" },
-  "login.email": { en: "Email", ka: "ელ. ფოსტა" },
+  "login.email": { en: "Email or phone", ka: "ელ. ფოსტა ან ტელეფონი" },
   "login.password": { en: "Password", ka: "პაროლი" },
   "login.signingIn": { en: "Signing in…", ka: "შესვლა…" },
-  "login.invalid": { en: "Invalid email or password.", ka: "არასწორი ელ. ფოსტა ან პაროლი." },
+  "login.invalid": { en: "Invalid credentials.", ka: "არასწორი მონაცემები." },
 
   // --- nav / sections ---
   "nav.dashboard": { en: "Dashboard", ka: "მთავარი" },
@@ -208,8 +208,9 @@ export const translations: Record<string, Entry> = {
 
   // workers
   "wrk.title": { en: "Workers", ka: "მუშები" },
-  "wrk.sub": { en: "Worker accounts. They sign in with their email and can be grouped into teams.", ka: "მუშების ანგარიშები. შედიან ელ. ფოსტით და ჯგუფდებიან ბრიგადებში." },
+  "wrk.sub": { en: "Worker accounts. They sign in with their email or phone and can be grouped into teams.", ka: "მუშების ანგარიშები. შედიან ელ. ფოსტით ან ტელეფონით და ჯგუფდებიან ბრიგადებში." },
   "wrk.email": { en: "Email", ka: "ელ. ფოსტა" },
+  "wrk.phone": { en: "Phone", ka: "ტელეფონი" },
   "wrk.passwordKeep": { en: "Leave blank to keep current", ka: "ცარიელი დატოვეთ ძველის შესანარჩუნებლად" },
   "wrk.password": { en: "Password", ka: "პაროლი" },
 

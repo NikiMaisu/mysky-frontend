@@ -14,11 +14,12 @@ export default function WorkersPage() {
       rowLabel={(w) => w.name}
       columns={[
         { header: t("set.name"), cell: (w) => w.name },
-        { header: t("wrk.email"), cell: (w) => w.email },
+        { header: t("wrk.email"), cell: (w) => w.email || w.phone || "—" },
       ]}
       fields={[
         { name: "name", label: t("set.name"), type: "text" },
-        { name: "email", label: t("wrk.email"), type: "email" },
+        { name: "email", label: t("wrk.email"), type: "email", required: false },
+        { name: "phone", label: t("wrk.phone"), type: "text", required: false },
         {
           name: "password",
           label: t("wrk.password"),
@@ -27,8 +28,8 @@ export default function WorkersPage() {
           hintOnEdit: t("wrk.passwordKeep"),
         },
       ]}
-      emptyForm={{ name: "", email: "", password: "" }}
-      toForm={(w) => ({ name: w.name, email: w.email, password: "" })}
+      emptyForm={{ name: "", email: "", phone: "", password: "" }}
+      toForm={(w) => ({ name: w.name, email: w.email ?? "", phone: w.phone ?? "", password: "" })}
     />
   );
 }
