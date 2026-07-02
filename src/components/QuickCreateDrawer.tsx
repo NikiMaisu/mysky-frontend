@@ -74,10 +74,6 @@ export function QuickCreateDrawer({
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!materialId) {
-      setError(t("form.errPickMaterial"));
-      return;
-    }
     setSaving(true);
     setError(null);
     const payload: OrderRequest = {
@@ -86,8 +82,7 @@ export function QuickCreateDrawer({
       finishOverridden: !!endVal,
       finishAt: endVal ? fromLocalInput(endVal) : null,
       teamId: teamId ? Number(teamId) : null,
-      materialId: Number(materialId),
-      squareMeters: Number(sqm) || 0,
+      materials: materialId ? [{ materialId: Number(materialId), squareMeters: Number(sqm) || 0 }] : [],
       graniteEnabled: false,
       status,
       fixtures: [],
@@ -140,7 +135,7 @@ export function QuickCreateDrawer({
           <div className="ms-form-grid">
             <div className="ms-field" style={{ marginBottom: 0 }}>
               <span className="ms-label">{t("form.material")}</span>
-              <select className="ms-select" required value={materialId} onChange={(e) => setMaterialId(e.target.value)}>
+              <select className="ms-select" value={materialId} onChange={(e) => setMaterialId(e.target.value)}>
                 <option value="">{t("common.select")}</option>
                 {materials.map((m) => (
                   <option key={m.id} value={m.id}>{m.name}</option>

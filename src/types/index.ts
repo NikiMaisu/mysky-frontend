@@ -55,11 +55,6 @@ export interface Addon {
   active: boolean;
 }
 
-export interface GraniteConfig {
-  pricePerMeter: number;
-  timePerMeterMinutes: number;
-}
-
 export interface Worker {
   id: number;
   name: string;
@@ -108,6 +103,16 @@ export interface OrderAddonLine {
   lineTimeMinutes: number;
 }
 
+export interface OrderMaterialLine {
+  materialId: number | null;
+  name: string;
+  unitPricePerM2: number;
+  unitTimeMinutes: number;
+  squareMeters: number;
+  lineCost: number;
+  lineTimeMinutes: number;
+}
+
 export interface Order {
   id: number;
   orderNumber: number;
@@ -118,11 +123,7 @@ export interface Order {
   finishAt: string;
   teamId: number | null;
   teamName: string | null;
-  materialId: number | null;
-  materialName: string;
-  materialPricePerM2: number;
-  materialTimePerM2Minutes: number;
-  squareMeters: number;
+  materials: OrderMaterialLine[];
   graniteEnabled: boolean;
   perimeter: number | null;
   granitePricePerMeter: number | null;
@@ -179,14 +180,14 @@ export interface WorkerReport {
 }
 
 export interface OrderRequest {
+  orderNumber?: number | null;
   clientName: string;
   clientPhone?: string;
   address?: string;
   startAt: string;
   finishAt?: string | null;
   teamId?: number | null;
-  materialId: number;
-  squareMeters: number;
+  materials: { materialId: number; squareMeters: number }[];
   graniteEnabled: boolean;
   perimeter?: number | null;
   flatAddedValue?: number;

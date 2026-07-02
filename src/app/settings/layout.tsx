@@ -10,7 +10,6 @@ const NAV = [
   { href: "/settings/materials", key: "set.materials" },
   { href: "/settings/fixtures", key: "set.fixtures" },
   { href: "/settings/addons", key: "set.addons" },
-  { href: "/settings/granite", key: "set.granite" },
   { href: "/settings/workers", key: "set.workers" },
   { href: "/settings/teams", key: "set.teams" },
   { href: "/settings/schedule", key: "set.schedule" },

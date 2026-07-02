@@ -13,7 +13,7 @@ import {
 } from "@/lib/orders";
 import { computeFinish, resolveSchedule, workdayMinutes } from "@/lib/schedule";
 import { useLang } from "@/lib/i18n";
-import type { Addon, Fixture, GraniteConfig, Material, Order, OrderRequest, OrderStatus, Team, TimeUnit, WorkSchedule } from "@/types";
+import type { Addon, Fixture, Material, Order, OrderRequest, OrderStatus, Team, TimeUnit, WorkSchedule } from "@/types";
 
 interface LineState {
   key: string;
@@ -55,10 +55,10 @@ export function OrderForm({
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [addons, setAddons] = useState<Addon[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
-  const [granite, setGranite] = useState<GraniteConfig | null>(null);
   const [workSchedule, setWorkSchedule] = useState<WorkSchedule | null>(null);
   const [refLoading, setRefLoading] = useState(true);
 
+  const [orderNumber, setOrderNumber] = useState(initial ? String(initial.orderNumber) : "");
   const [clientName, setClientName] = useState(initial?.clientName ?? defaultClient ?? "");
   const [clientPhone, setClientPhone] = useState(initial?.clientPhone ?? "");
   const [address, setAddress] = useState(initial?.address ?? "");
@@ -66,10 +66,13 @@ export function OrderForm({
     toLocalInput(initial?.startAt) || toLocalInput(defaultStart) || toLocalInput(new Date().toISOString()),
   );
   const [teamId, setTeamId] = useState(initial?.teamId ? String(initial.teamId) : defaultTeamId ?? "");
-  const [materialId, setMaterialId] = useState(initial?.materialId ? String(initial.materialId) : defaultMaterialId ?? "");
-  const [squareMeters, setSquareMeters] = useState(initial ? String(initial.squareMeters) : defaultSquareMeters ?? "");
-  const [graniteEnabled, setGraniteEnabled] = useState(initial?.graniteEnabled ?? false);
-  const [perimeter, setPerimeter] = useState(initial?.perimeter != null ? String(initial.perimeter) : "");
+  const [materialLines, setMaterialLines] = useState<LineState[]>(() => {
+    if (initial) return initial.materials.map((m) => toLineState(m.materialId, Number(m.squareMeters)));
+    if (defaultMaterialId) {
+      return [{ key: newKey(), refId: defaultMaterialId, quantity: defaultSquareMeters ?? "" }];
+    }
+    return [];
+  });
   const [flatValue, setFlatValue] = useState(initial ? String(initial.flatAddedMinutes) : "0");
   const [flatUnit, setFlatUnit] = useState<TimeUnit>("MINUTES");
   const [customEnd, setCustomEnd] = useState(initial?.finishOverridden ?? (!initial && !!defaultEnd));
@@ -91,19 +94,17 @@ export function OrderForm({
   useEffect(() => {
     void (async () => {
       try {
-        const [m, f, a, t, g, ws] = await Promise.all([
+        const [m, f, a, t, ws] = await Promise.all([
           apiFetch<Material[]>("/materials"),
           apiFetch<Fixture[]>("/fixtures"),
           apiFetch<Addon[]>("/addons"),
           apiFetch<Team[]>("/teams"),
-          apiFetch<GraniteConfig>("/granite"),
           apiFetch<WorkSchedule>("/work-schedule"),
         ]);
         setMaterials(m);
         setFixtures(f);
         setAddons(a);
         setTeams(t);
-        setGranite(g);
         setWorkSchedule(ws);
       } catch {
         setError("Failed to load reference data.");
@@ -128,24 +129,18 @@ export function OrderForm({
   }, [flatValue, flatUnit, workdayMin]);
 
   const calc = useMemo(() => {
-    const sqm = Number(squareMeters) || 0;
-    const material = materials.find((m) => m.id === Number(materialId));
     let minutes = 0;
     let cost = 0;
     const rows: { label: string; cost: number }[] = [];
 
-    if (material) {
-      const mc = material.pricePerM2 * sqm;
-      minutes += material.timePerM2Minutes * sqm;
+    for (const l of materialLines) {
+      const mat = materials.find((m) => m.id === Number(l.refId));
+      if (!mat) continue;
+      const sqm = Number(l.quantity) || 0;
+      const mc = mat.pricePerM2 * sqm;
+      minutes += mat.timePerM2Minutes * sqm;
       cost += mc;
-      rows.push({ label: `${material.name} · ${sqm} m²`, cost: mc });
-    }
-    if (graniteEnabled && granite) {
-      const p = Number(perimeter) || 0;
-      const gc = granite.pricePerMeter * p;
-      minutes += granite.timePerMeterMinutes * p;
-      cost += gc;
-      rows.push({ label: `Granite · ${p} m`, cost: gc });
+      rows.push({ label: `${mat.name} · ${sqm} m²`, cost: mc });
     }
     for (const l of fixtureLines) {
       const fx = fixtures.find((f) => f.id === Number(l.refId));
@@ -168,7 +163,7 @@ export function OrderForm({
     minutes += flatMinutes;
 
     return { minutes: Math.round(minutes), cost, rows };
-  }, [squareMeters, materialId, materials, graniteEnabled, granite, perimeter, fixtureLines, fixtures, addonLines, addons, flatMinutes]);
+  }, [materialLines, materials, fixtureLines, fixtures, addonLines, addons, flatMinutes]);
 
   const recommendedFinish = useMemo(
     () => (schedule && startAt ? computeFinish(startAt, calc.minutes, schedule) : null),
@@ -187,14 +182,6 @@ export function OrderForm({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!materialId) {
-      setError(t("form.errPickMaterial"));
-      return;
-    }
-    if (graniteEnabled && !perimeter) {
-      setError(t("form.errPerimeter"));
-      return;
-    }
     if (customEnd && !endValue) {
       setError(t("form.errCustomEnd"));
       return;
@@ -202,6 +189,7 @@ export function OrderForm({
     setSaving(true);
 
     const payload: OrderRequest = {
+      orderNumber: orderNumber ? Number(orderNumber) : null,
       clientName,
       clientPhone: clientPhone || undefined,
       address: address || undefined,
@@ -209,10 +197,11 @@ export function OrderForm({
       finishOverridden: customEnd,
       finishAt: customEnd ? fromLocalInput(endValue) : null,
       teamId: teamId ? Number(teamId) : null,
-      materialId: Number(materialId),
-      squareMeters: Number(squareMeters) || 0,
-      graniteEnabled,
-      perimeter: graniteEnabled ? Number(perimeter) || 0 : null,
+      materials: materialLines
+        .filter((l) => l.refId)
+        .map((l) => ({ materialId: Number(l.refId), squareMeters: Number(l.quantity) || 0 })),
+      graniteEnabled: false,
+      perimeter: null,
       flatAddedValue: Number(flatValue) || 0,
       flatAddedUnit: flatUnit,
       status,
@@ -267,9 +256,21 @@ export function OrderForm({
         <div>
           <div className="ms-card ms-form-panel">
             <h2>{t("form.client")}</h2>
-            <div className="ms-field">
-              <span className="ms-label">{t("form.clientName")}</span>
-              <input className="ms-input" required value={clientName} onChange={(e) => setClientName(e.target.value)} />
+            <div className="ms-form-grid">
+              <div className="ms-field" style={{ marginBottom: 0 }}>
+                <span className="ms-label">{t("form.clientName")}</span>
+                <input className="ms-input" required value={clientName} onChange={(e) => setClientName(e.target.value)} />
+              </div>
+              <div className="ms-field" style={{ marginBottom: 0 }}>
+                <span className="ms-label">{t("form.orderNumber")}</span>
+                <input
+                  type="number"
+                  className="ms-input"
+                  placeholder={t("form.orderNumberAuto")}
+                  value={orderNumber}
+                  onChange={(e) => setOrderNumber(e.target.value)}
+                />
+              </div>
             </div>
             <div className="ms-form-grid">
               <div className="ms-field" style={{ marginBottom: 0 }}>
@@ -312,34 +313,15 @@ export function OrderForm({
             </div>
           </div>
 
-          <div className="ms-card ms-form-panel">
-            <h2>{t("form.materialArea")}</h2>
-            <div className="ms-form-grid">
-              <div className="ms-field" style={{ marginBottom: 0 }}>
-                <span className="ms-label">{t("form.material")}</span>
-                <select className="ms-select" required value={materialId} onChange={(e) => setMaterialId(e.target.value)}>
-                  <option value="">{t("common.select")}</option>
-                  {materials.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="ms-field" style={{ marginBottom: 0 }}>
-                <span className="ms-label">{t("form.area")}</span>
-                <input type="number" step="0.01" min="0" className="ms-input" required value={squareMeters} onChange={(e) => setSquareMeters(e.target.value)} />
-              </div>
-            </div>
-            <label className="ms-checkline" style={{ marginTop: 14 }}>
-              <input type="checkbox" checked={graniteEnabled} onChange={(e) => setGraniteEnabled(e.target.checked)} />
-              {t("form.granite")}
-            </label>
-            {graniteEnabled && (
-              <div className="ms-field" style={{ marginTop: 10, marginBottom: 0, maxWidth: 220 }}>
-                <span className="ms-label">{t("form.perimeter")}</span>
-                <input type="number" step="0.01" min="0" className="ms-input" value={perimeter} onChange={(e) => setPerimeter(e.target.value)} />
-              </div>
-            )}
-          </div>
+          <LineEditor
+            title={t("form.materialArea")}
+            lines={materialLines}
+            options={materials.map((m) => ({ id: m.id, label: m.name }))}
+            onChange={(key, patch) => setLine(setMaterialLines, key, patch)}
+            onAdd={() => setMaterialLines((l) => [...l, { key: newKey(), refId: "", quantity: "" }])}
+            onRemove={(key) => setMaterialLines((l) => l.filter((x) => x.key !== key))}
+            quantityPlaceholder={t("form.area")}
+          />
 
           <LineEditor
             title={t("form.fixtures")}
@@ -454,6 +436,7 @@ function LineEditor({
   onChange,
   onAdd,
   onRemove,
+  quantityPlaceholder,
 }: {
   title: string;
   lines: LineState[];
@@ -461,6 +444,7 @@ function LineEditor({
   onChange: (key: string, patch: Partial<LineState>) => void;
   onAdd: () => void;
   onRemove: (key: string) => void;
+  quantityPlaceholder?: string;
 }) {
   const { t } = useLang();
   return (
@@ -476,7 +460,15 @@ function LineEditor({
                 <option key={o.id} value={o.id}>{o.label}</option>
               ))}
             </select>
-            <input type="number" step="0.01" min="0" className="ms-input" value={l.quantity} onChange={(e) => onChange(l.key, { quantity: e.target.value })} placeholder={t("form.qty")} />
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              className="ms-input"
+              value={l.quantity}
+              onChange={(e) => onChange(l.key, { quantity: e.target.value })}
+              placeholder={quantityPlaceholder ?? t("form.qty")}
+            />
             <button type="button" className="ms-line-remove" onClick={() => onRemove(l.key)} aria-label="Remove">×</button>
           </div>
         ))}
