@@ -199,10 +199,6 @@ export const translations: Record<string, Entry> = {
   // addons
   "add.title": { en: "Add-ons", ka: "დანამატები" },
   "add.sub": { en: "Named add-on instances (blinds railing, HVAC cutout, etc.) picked when creating an order.", ka: "დასახელებული დანამატები (ჟალუზის სარჭე, ვენტილაციის ჭრილი და ა.შ.), რომლებიც შეკვეთისას აირჩევა." },
-  "add.category": { en: "Category", ka: "კატეგორია" },
-  "add.cat.blinds": { en: "Blinds railing", ka: "ჟალუზის სარჭე" },
-  "add.cat.hvac": { en: "HVAC cutout", ka: "ვენტილაციის ჭრილი" },
-  "add.cat.other": { en: "Other", ka: "სხვა" },
 
   // workers
   "wrk.title": { en: "Workers", ka: "მუშები" },
