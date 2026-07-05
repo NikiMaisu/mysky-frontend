@@ -20,7 +20,7 @@ export default function MaterialsPage() {
       fields={[
         { name: "name", label: t("set.name"), type: "text" },
         { name: "pricePerM2", label: t("mat.priceField"), type: "number", step: "0.01" },
-        { name: "timePerM2Minutes", label: t("mat.timeField"), type: "number", step: "0.01" },
+        { name: "timePerM2Minutes", label: t("mat.timeField"), type: "number", step: "1" },
       ]}
       emptyForm={{ name: "", pricePerM2: "", timePerM2Minutes: "" }}
       toForm={(m) => ({

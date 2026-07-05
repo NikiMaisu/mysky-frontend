@@ -31,7 +31,7 @@ export default function FixturesPage() {
           ],
         },
         { name: "cost", label: t("fix.costField"), type: "number", step: "0.01" },
-        { name: "installTimeMinutes", label: t("fix.timeField"), type: "number", step: "0.01" },
+        { name: "installTimeMinutes", label: t("fix.timeField"), type: "number", step: "1" },
       ]}
       emptyForm={{ name: "", unit: "PER_UNIT", cost: "", installTimeMinutes: "" }}
       toForm={(f) => ({
