@@ -140,19 +140,6 @@ export const translations: Record<string, Entry> = {
   "quick.title": { en: "Quick order", ka: "სწრაფი შეკვეთა" },
   "quick.moreDetails": { en: "More details →", ka: "მეტი დეტალი →" },
 
-  // --- reports ---
-  "nav.reports": { en: "Reports", ka: "რეპორტები" },
-  "rep.title": { en: "Reports", ka: "რეპორტები" },
-  "rep.adminOnly": { en: "Reports are available to admins only.", ka: "რეპორტები მხოლოდ ადმინისთვისაა ხელმისაწვდომი." },
-  "rep.brigades": { en: "By brigade", ka: "ბრიგადების მიხედვით" },
-  "rep.workers": { en: "By worker", ka: "მუშების მიხედვით" },
-  "rep.colOrders": { en: "Orders", ka: "შეკვეთები" },
-  "rep.colHours": { en: "Hours", ka: "საათები" },
-  "rep.colM2": { en: "m²", ka: "მ²" },
-  "rep.colRevenue": { en: "Revenue", ka: "შემოსავალი" },
-  "rep.noData": { en: "No work in this month.", ka: "ამ თვეში სამუშაო არ არის." },
-  "rep.workerNote": { en: "Hours and m² are credited in full to every current member of the brigade.", ka: "საათები და მ² სრულად ეთვლება ბრიგადის ყველა მიმდინარე წევრს." },
-
   // --- calendar ---
   "cal.title": { en: "Schedule", ka: "გრაფიკი" },
   "cal.adminOnly": { en: "The schedule is available to admins only.", ka: "გრაფიკი მხოლოდ ადმინისთვისაა ხელმისაწვდომი." },

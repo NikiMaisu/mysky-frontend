@@ -31,7 +31,6 @@ export function TopNav() {
         { href: "/", label: t("nav.dashboard"), match: (p: string) => p === "/" },
         { href: "/calendar", label: t("nav.schedule"), match: (p: string) => p.startsWith("/calendar") },
         { href: "/orders", label: t("nav.orders"), match: (p: string) => p.startsWith("/orders") },
-        { href: "/reports", label: t("nav.reports"), match: (p: string) => p.startsWith("/reports") },
         { href: "/settings", label: t("nav.configuration"), match: (p: string) => p.startsWith("/settings") },
       ]
     : [{ href: "/", label: t("nav.dashboard"), match: (p: string) => p === "/" }];

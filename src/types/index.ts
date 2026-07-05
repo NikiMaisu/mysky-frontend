@@ -162,23 +162,6 @@ export interface DayAvailability {
   busyTeams: TeamRef[];
 }
 
-export interface BrigadeReport {
-  teamId: number;
-  teamName: string | null;
-  orderCount: number;
-  totalMinutes: number;
-  totalSquareMeters: number;
-  totalCost: number;
-}
-
-export interface WorkerReport {
-  workerId: number;
-  name: string;
-  orderCount: number;
-  totalMinutes: number;
-  totalSquareMeters: number;
-}
-
 export interface OrderRequest {
   orderNumber?: number | null;
   clientName: string;
