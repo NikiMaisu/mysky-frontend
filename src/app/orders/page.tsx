@@ -5,26 +5,46 @@ import { useCallback, useEffect, useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import { ORDER_STATUSES, formatDateTime, formatGel, statusTag } from "@/lib/orders";
 import { useLang } from "@/lib/i18n";
-import type { Order, OrderStatus } from "@/types";
+import type { Order, OrderStatus, Team } from "@/types";
 
 export default function OrdersPage() {
   const { t } = useLang();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<OrderStatus | "">("");
-  const [exportFrom, setExportFrom] = useState("");
-  const [exportTo, setExportTo] = useState("");
+  const [teamId, setTeamId] = useState("");
+  const [q, setQ] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
-  function downloadExport(format: "csv" | "xlsx") {
-    const qs = new URLSearchParams({ format });
+  useEffect(() => {
+    apiFetch<Team[]>("/teams").then(setTeams).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQ(q.trim()), 300);
+    return () => clearTimeout(id);
+  }, [q]);
+
+  function buildParams(extra: Record<string, string> = {}): URLSearchParams {
+    const qs = new URLSearchParams(extra);
     if (status) qs.set("status", status);
-    if (exportFrom) qs.set("from", new Date(exportFrom).toISOString());
-    if (exportTo) {
-      const end = new Date(exportTo);
+    if (teamId) qs.set("teamId", teamId);
+    if (debouncedQ) qs.set("q", debouncedQ);
+    if (from) qs.set("from", new Date(from).toISOString());
+    if (to) {
+      const end = new Date(to);
       end.setDate(end.getDate() + 1); // inclusive of the chosen end day
       qs.set("to", end.toISOString());
     }
+    return qs;
+  }
+
+  function downloadExport(format: "csv" | "xlsx") {
+    const qs = buildParams({ format });
     const a = document.createElement("a");
     a.href = `/api/orders/export?${qs.toString()}`;
     a.rel = "noopener";
@@ -37,14 +57,15 @@ export default function OrdersPage() {
     setLoading(true);
     setError(null);
     try {
-      const query = status ? `?status=${status}` : "";
-      setOrders(await apiFetch<Order[]>(`/orders${query}`));
+      const qs = buildParams().toString();
+      setOrders(await apiFetch<Order[]>(`/orders${qs ? `?${qs}` : ""}`));
     } catch (e) {
       setError(e instanceof ApiError ? t("common.failedLoadCode", { code: e.status }) : t("common.failedLoad"));
     } finally {
       setLoading(false);
     }
-  }, [status, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, teamId, debouncedQ, from, to, t]);
 
   useEffect(() => {
     void load();
@@ -63,6 +84,31 @@ export default function OrdersPage() {
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center", flexWrap: "wrap" }}>
+        <input
+          type="search"
+          className="ms-input"
+          style={{ width: 260 }}
+          placeholder={t("orders.searchPlaceholder")}
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <select className="ms-select" style={{ width: "auto" }} value={teamId} onChange={(e) => setTeamId(e.target.value)}>
+          <option value="">{t("orders.allTeams")}</option>
+          {teams.map((tm) => (
+            <option key={tm.id} value={tm.id}>{tm.name}</option>
+          ))}
+        </select>
+        <label className="row-flex" style={{ gap: 4, fontSize: 12 }}>
+          <span className="muted">{t("exp.from")}</span>
+          <input type="date" className="ms-input" style={{ width: "auto" }} value={from} onChange={(e) => setFrom(e.target.value)} />
+        </label>
+        <label className="row-flex" style={{ gap: 4, fontSize: 12 }}>
+          <span className="muted">{t("exp.to")}</span>
+          <input type="date" className="ms-input" style={{ width: "auto" }} value={to} onChange={(e) => setTo(e.target.value)} />
+        </label>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
         <span className="ms-label" style={{ marginRight: 2 }}>{t("orders.status")}</span>
         <div className="ms-seg" style={{ flexWrap: "wrap" }}>
           <button type="button" className={status === "" ? "on" : ""} onClick={() => setStatus("")}>{t("orders.all")}</button>
@@ -72,18 +118,8 @@ export default function OrdersPage() {
             </button>
           ))}
         </div>
-      </div>
-
-      <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
+        <span style={{ flex: 1 }} />
         <span className="ms-label" style={{ marginRight: 2 }}>{t("exp.export")}</span>
-        <label className="row-flex" style={{ gap: 4, fontSize: 12 }}>
-          <span className="muted">{t("exp.from")}</span>
-          <input type="date" className="ms-input" style={{ width: "auto" }} value={exportFrom} onChange={(e) => setExportFrom(e.target.value)} />
-        </label>
-        <label className="row-flex" style={{ gap: 4, fontSize: 12 }}>
-          <span className="muted">{t("exp.to")}</span>
-          <input type="date" className="ms-input" style={{ width: "auto" }} value={exportTo} onChange={(e) => setExportTo(e.target.value)} />
-        </label>
         <button type="button" className="ms-btn sm" onClick={() => downloadExport("csv")}>{t("exp.csv")}</button>
         <button type="button" className="ms-btn sm" onClick={() => downloadExport("xlsx")}>{t("exp.excel")}</button>
       </div>
