@@ -331,7 +331,9 @@ export function CalendarMonthGrid({
                 {busyClass && <span className={"ms-busydot " + busyClass} title={busyClass} />}
               </div>
               {avail && avail.freeTeams.length > 0 && total > 0 && (
-                <div className="ms-month-free">{avail.freeTeams.map((t) => t.name).join(", ")}</div>
+                <div className="ms-month-free" title={avail.freeTeams.map((t) => t.name).join(", ")}>
+                  {avail.freeTeams.map((t) => t.name).join(", ")}
+                </div>
               )}
               {dayOrders.slice(0, 3).map(({ o, seg }) => (
                 <div
