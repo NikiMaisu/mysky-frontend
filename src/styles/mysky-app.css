@@ -264,6 +264,52 @@ body {
 .ms-detail-section p.notes { font-size: 13px; color: var(--ink-2); white-space: pre-wrap; margin: 0; }
 @media (max-width: 520px) { .ms-drawer { width: 100%; } }
 
+/* ===== calendar: mobile ===== */
+@media (max-width: 760px) {
+  /* header controls wrap instead of overflowing/squeezing horizontally */
+  .ms-header { flex-wrap: wrap; padding: 14px 14px 12px; gap: 10px; }
+  .ms-h-spacer { flex-basis: 100%; height: 0; }
+  .ms-view-switch { width: 100%; }
+  .ms-view-switch button { flex: 1; text-align: center; }
+
+  /* reclaim side margins the desktop layout spends on breathing room */
+  .ms-cal-wrap, .ms-month-wrap { margin: 0 10px 16px; }
+  .ms-cal-freebar { padding: 8px 12px; }
+
+  /* time grid (day/week): denser day headers/events, week view stays a 7-col
+     grid (no horizontal scroll) but shrinks to fit. The 64px hour-gutter width
+     is kept as-is (not shrunk) because CalendarViews.tsx hardcodes 64px when
+     positioning event blocks and hit-testing drag-to-create — changing the
+     column width here without updating that JS would misalign both.
+     minmax(0, 1fr) on the day columns is what actually matters: plain 1fr has
+     an implicit min-width:auto, so a column would refuse to shrink past its
+     widest child (e.g. a "Team Nika and Gio" free-chip), silently clipping the
+     later day columns off-screen instead of the wanted denser layout. */
+  .ms-cal-days, .ms-cal-grid { grid-template-columns: 64px repeat(var(--cols, 7), minmax(0, 1fr)); }
+  .ms-cal-hour-label { font-size: 9px; padding: 4px 6px; }
+  .ms-cal-daycell { padding: 6px 3px; gap: 1px; overflow: hidden; }
+  .ms-cal-daycell .num { font-size: 13px; }
+  .ms-cal-daycell .dow { font-size: 8.5px; }
+  .ms-cal-free-label { font-size: 8px; margin-top: 4px; }
+  .ms-free-chip { font-size: 8px; padding: 1px 5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+  .ms-event { padding: 4px 6px 4px 8px; }
+  .ms-event-client { font-size: 10px; }
+  .ms-event-meta, .ms-event-foot, .ms-event-crew { font-size: 9px; }
+
+  /* month grid: tighter cells so 7 columns stay legible on a phone width.
+     Same minmax(0, 1fr) fix as the time grid above — plain 1fr wouldn't shrink
+     past its widest child and the overflow column would get silently clipped
+     by .ms-month-wrap's overflow:hidden instead of just shrinking. */
+  .ms-month-dows, .ms-month-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .ms-month-dows > div { padding: 6px 3px; font-size: 8.5px; }
+  .ms-month-cell { padding: 4px 5px; gap: 2px; }
+  .ms-month-num { font-size: 11px; width: 18px; height: 18px; }
+  .ms-month-pill { font-size: 9px; padding: 1px 4px 1px 6px; }
+  .ms-month-free { font-size: 9px; }
+  .ms-month-more { font-size: 8.5px; }
+}
+
 /* ===== dashboard ===== */
 .ms-dash-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
 .ms-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
