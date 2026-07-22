@@ -11,7 +11,7 @@ export default function CalendarLayout({ children }: { children: ReactNode }) {
   if (loading) {
     return <main className="ms-page"><div className="ms-center">{t("common.loading")}</div></main>;
   }
-  if (!user || user.role !== "ADMIN") {
+  if (!user) {
     return <main className="ms-page"><div className="ms-center">{t("cal.adminOnly")}</div></main>;
   }
 

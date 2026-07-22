@@ -33,7 +33,10 @@ export function TopNav() {
         { href: "/orders", label: t("nav.orders"), match: (p: string) => p.startsWith("/orders") },
         { href: "/settings", label: t("nav.configuration"), match: (p: string) => p.startsWith("/settings") },
       ]
-    : [{ href: "/", label: t("nav.dashboard"), match: (p: string) => p === "/" }];
+    : [
+        { href: "/", label: t("nav.dashboard"), match: (p: string) => p === "/" },
+        { href: "/calendar", label: t("nav.schedule"), match: (p: string) => p.startsWith("/calendar") },
+      ];
 
   const initials = user.name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
 

@@ -46,8 +46,7 @@ export default function Home() {
     const month = orders.filter((o) => inMonth(o.startAt) && o.status !== "CANCELLED");
     return {
       count: month.length,
-      sqm: month.reduce((s, o) => s + o.squareMeters, 0),
-      revenue: month.reduce((s, o) => s + o.totalCost, 0),
+      sqm: month.reduce((s, o) => s + o.materials.reduce((ms, m) => ms + m.squareMeters, 0), 0),
       completed: month.filter((o) => o.status === "DONE").length,
       active: month.filter((o) => o.status !== "DONE").length,
     };
@@ -79,7 +78,8 @@ export default function Home() {
 
         {!isAdmin && (
           <div className="ms-card" style={{ padding: 24, maxWidth: 520 }}>
-            <p className="muted" style={{ fontSize: 13, margin: 0 }}>{t("dash.workerNote")}</p>
+            <p className="muted" style={{ fontSize: 13, margin: "0 0 14px" }}>{t("dash.workerNote")}</p>
+            <Link href="/calendar" className="ms-btn accent">{t("nav.schedule")}</Link>
           </div>
         )}
 
@@ -89,7 +89,6 @@ export default function Home() {
               <Link href="/orders/new" className="ms-btn accent">{t("nav.newOrder")}</Link>
               <Link href="/calendar" className="ms-btn">{t("nav.schedule")}</Link>
               <Link href="/orders" className="ms-btn">{t("nav.orders")}</Link>
-              <Link href="/reports" className="ms-btn">{t("nav.reports")}</Link>
               <Link href="/settings" className="ms-btn">{t("nav.configuration")}</Link>
             </div>
 
@@ -104,11 +103,6 @@ export default function Home() {
                   <div className="label">{t("dash.m2ThisMonth")}</div>
                   <div className="value">{stats ? Math.round(stats.sqm).toLocaleString() : "—"}</div>
                   <div className="sub">{t("dash.installedArea")}</div>
-                </div>
-                <div className="ms-card ms-stat">
-                  <div className="label">{t("dash.revenueThisMonth")}</div>
-                  <div className="value">{stats ? `${Math.round(stats.revenue).toLocaleString(lang === "ka" ? "ka-GE" : "en-GB")} ₾` : "—"}</div>
-                  <div className="sub">{t("dash.nonCancelled")}</div>
                 </div>
                 <div className="ms-card ms-stat">
                   <div className="label">{t("dash.completed")}</div>

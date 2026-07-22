@@ -58,8 +58,6 @@ export const translations: Record<string, Entry> = {
   "dash.activeDone": { en: "{active} active · {done} done", ka: "{active} აქტიური · {done} დასრულებული" },
   "dash.m2ThisMonth": { en: "m² this month", ka: "მ² ამ თვეში" },
   "dash.installedArea": { en: "installed area", ka: "დამონტაჟებული ფართობი" },
-  "dash.revenueThisMonth": { en: "Revenue this month", ka: "შემოსავალი ამ თვეში" },
-  "dash.nonCancelled": { en: "non-cancelled", ka: "არგაუქმებული" },
   "dash.completed": { en: "Completed", ka: "დასრულებული" },
   "dash.thisMonth": { en: "this month", ka: "ამ თვეში" },
   "dash.freeToday": { en: "Free today", ka: "დღეს თავისუფალი" },

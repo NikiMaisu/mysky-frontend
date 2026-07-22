@@ -3,12 +3,15 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { formatDateTime, formatGel, formatMinutes, statusTag } from "@/lib/orders";
 import { useLang } from "@/lib/i18n";
 import type { Order } from "@/types";
 
 export function OrderDrawer({ orderId, onClose }: { orderId: number | null; onClose: () => void }) {
   const router = useRouter();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
   const { t } = useLang();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
@@ -61,14 +64,22 @@ export function OrderDrawer({ orderId, onClose }: { orderId: number | null; onCl
                 <div className="ms-kv"><div className="k">{t("form.start")}</div><div className="v">{formatDateTime(order.startAt)}</div></div>
                 <div className="ms-kv"><div className="k">{t("form.finish")}</div><div className="v">{formatDateTime(order.finishAt)}</div></div>
                 <div className="ms-kv"><div className="k">{t("form.team")}</div><div className="v">{order.teamName ?? "—"}</div></div>
-                <div className="ms-kv"><div className="k">{t("form.material")}</div><div className="v">{order.materialName}</div></div>
-                <div className="ms-kv"><div className="k">{t("form.area")}</div><div className="v num">{order.squareMeters} m²</div></div>
-                {order.graniteEnabled && (
-                  <div className="ms-kv"><div className="k">{t("form.perimeter")}</div><div className="v num">{order.perimeter} m</div></div>
-                )}
                 <div className="ms-kv"><div className="k">{t("form.estTime")}</div><div className="v num">{formatMinutes(order.totalMinutes)}</div></div>
-                <div className="ms-kv"><div className="k">{t("form.totalCost")}</div><div className="v num">{formatGel(order.totalCost)}</div></div>
+                {isAdmin && (
+                  <div className="ms-kv"><div className="k">{t("form.totalCost")}</div><div className="v num">{formatGel(order.totalCost)}</div></div>
+                )}
               </div>
+
+              {order.materials.length > 0 && (
+                <div className="ms-detail-section">
+                  <h4>{t("form.materialArea")}</h4>
+                  <div className="ms-extras-list">
+                    {order.materials.map((m, i) => (
+                      <div className="row" key={i}><span>{m.name}</span><span className="qty">{m.squareMeters} m²</span></div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {order.fixtures.length > 0 && (
                 <div className="ms-detail-section">
@@ -103,14 +114,16 @@ export function OrderDrawer({ orderId, onClose }: { orderId: number | null; onCl
         </div>
 
         <div className="ms-drawer-foot">
-          <button
-            type="button"
-            className="ms-btn primary"
-            disabled={!order}
-            onClick={() => order && router.push(`/orders/${order.id}/edit`)}
-          >
-            {t("common.edit")}
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              className="ms-btn primary"
+              disabled={!order}
+              onClick={() => order && router.push(`/orders/${order.id}/edit`)}
+            >
+              {t("common.edit")}
+            </button>
+          )}
           <button type="button" className="ms-btn" onClick={onClose}>{t("common.close")}</button>
         </div>
       </div>

@@ -19,10 +19,13 @@ import {
   viewRange,
 } from "@/lib/calendar";
 import { resolveSchedule } from "@/lib/schedule";
+import { useAuth } from "@/lib/auth";
 import { useLang } from "@/lib/i18n";
 import type { CalendarOrder, DayAvailability, Team, WorkSchedule } from "@/types";
 
 export default function CalendarPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
   const { t, lang } = useLang();
   const locale = lang === "ka" ? "ka-GE" : "en-GB";
   const [view, setView] = useState<CalendarView>("week");
@@ -165,13 +168,13 @@ export default function CalendarPage() {
             )}
           </div>
           {globalSchedule && (
-            <CalendarTimeGrid days={days} today={today} orders={orders} scheduleFor={scheduleFor} availByDay={availByDay} onPickOrder={setSelectedId} onCreateRange={startCreate} />
+            <CalendarTimeGrid days={days} today={today} orders={orders} scheduleFor={scheduleFor} availByDay={availByDay} onPickOrder={setSelectedId} onCreateRange={isAdmin ? startCreate : undefined} />
           )}
         </>
       )}
 
       {view === "week" && globalSchedule && (
-        <CalendarTimeGrid days={days} today={today} orders={orders} scheduleFor={scheduleFor} availByDay={availByDay} onPickOrder={setSelectedId} onCreateRange={startCreate} />
+        <CalendarTimeGrid days={days} today={today} orders={orders} scheduleFor={scheduleFor} availByDay={availByDay} onPickOrder={setSelectedId} onCreateRange={isAdmin ? startCreate : undefined} />
       )}
 
       {view === "month" && globalSchedule && (
@@ -188,7 +191,7 @@ export default function CalendarPage() {
       )}
 
       <OrderDrawer orderId={selectedId} onClose={() => setSelectedId(null)} />
-      <QuickCreateDrawer range={createRange} onClose={() => setCreateRange(null)} onCreated={load} />
+      {isAdmin && <QuickCreateDrawer range={createRange} onClose={() => setCreateRange(null)} onCreated={load} />}
     </div>
   );
 }
