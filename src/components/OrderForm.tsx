@@ -79,6 +79,8 @@ export function OrderForm({
   const [endValue, setEndValue] = useState(
     initial?.finishOverridden ? toLocalInput(initial.finishAt) : !initial && defaultEnd ? toLocalInput(defaultEnd) : "",
   );
+  const [customCost, setCustomCost] = useState(initial?.costOverridden ?? false);
+  const [costValue, setCostValue] = useState(initial?.costOverridden ? String(initial.totalCost) : "");
   const [status, setStatus] = useState<OrderStatus>(initial?.status ?? defaultStatus ?? "QUOTED");
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [fixtureLines, setFixtureLines] = useState<LineState[]>(
@@ -179,11 +181,20 @@ export function OrderForm({
     if (on && !endValue && recommendedFinish) setEndValue(toLocalInput(recommendedFinish.toISOString()));
   }
 
+  function toggleCustomCost(on: boolean) {
+    setCustomCost(on);
+    if (on && !costValue) setCostValue(calc.cost.toFixed(2));
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (customEnd && !endValue) {
       setError(t("form.errCustomEnd"));
+      return;
+    }
+    if (customCost && (!costValue || Number(costValue) < 0)) {
+      setError(t("form.errCustomCost"));
       return;
     }
     setSaving(true);
@@ -204,6 +215,8 @@ export function OrderForm({
       perimeter: null,
       flatAddedValue: Number(flatValue) || 0,
       flatAddedUnit: flatUnit,
+      costOverridden: customCost,
+      totalCost: customCost ? Number(costValue) : null,
       status,
       notes: notes || undefined,
       fixtures: fixtureLines.filter((l) => l.refId).map((l) => ({ fixtureId: Number(l.refId), quantity: Number(l.quantity) || 0 })),
@@ -377,10 +390,33 @@ export function OrderForm({
             )}
             <div className="ms-calc-total">
               <div>
-                <div className="lbl">{t("form.totalCost")}</div>
+                <div className="lbl">{customCost ? t("form.estCost") : t("form.totalCost")}</div>
                 <div className="big">{formatGel(calc.cost)}</div>
               </div>
             </div>
+
+            <label className="ms-checkline" style={{ marginTop: 12 }}>
+              <input type="checkbox" checked={customCost} onChange={(e) => toggleCustomCost(e.target.checked)} />
+              {t("form.customCost")}
+            </label>
+            {customCost && (
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                className="ms-input"
+                style={{ marginTop: 8 }}
+                value={costValue}
+                onChange={(e) => setCostValue(e.target.value)}
+              />
+            )}
+            {customCost && costValue && (
+              <div className="ms-calc-row" style={{ marginTop: 8 }}>
+                <span className="lbl">{t("form.finalCost")}</span>
+                <span>{formatGel(Number(costValue) || 0)}</span>
+              </div>
+            )}
+
             <div className="ms-calc-row" style={{ marginTop: 6 }}>
               <span className="lbl">{t("form.estTime")}</span>
               <span>{formatMinutes(calc.minutes)}</span>

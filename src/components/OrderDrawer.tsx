@@ -66,7 +66,10 @@ export function OrderDrawer({ orderId, onClose }: { orderId: number | null; onCl
                 <div className="ms-kv"><div className="k">{t("form.team")}</div><div className="v">{order.teamName ?? "—"}</div></div>
                 <div className="ms-kv"><div className="k">{t("form.estTime")}</div><div className="v num">{formatMinutes(order.totalMinutes)}</div></div>
                 {isAdmin && (
-                  <div className="ms-kv"><div className="k">{t("form.totalCost")}</div><div className="v num">{formatGel(order.totalCost)}</div></div>
+                  <div className="ms-kv">
+                    <div className="k">{order.costOverridden ? t("form.finalCost") : t("form.totalCost")}</div>
+                    <div className="v num">{formatGel(order.totalCost)}</div>
+                  </div>
                 )}
               </div>
 

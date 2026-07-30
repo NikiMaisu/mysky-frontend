@@ -131,6 +131,7 @@ export interface Order {
   flatAddedMinutes: number;
   totalMinutes: number;
   totalCost: number;
+  costOverridden: boolean;
   finishOverridden: boolean;
   status: OrderStatus;
   notes: string | null;
@@ -176,6 +177,8 @@ export interface OrderRequest {
   flatAddedValue?: number;
   flatAddedUnit?: TimeUnit;
   finishOverridden?: boolean;
+  costOverridden?: boolean;
+  totalCost?: number | null;
   status?: OrderStatus;
   notes?: string;
   fixtures: { fixtureId: number; quantity: number }[];
